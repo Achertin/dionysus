@@ -23,6 +23,7 @@ final_weights = np.round(res.x, 2)
 final_target = np.round(np.dot(nutrition_matrix, final_weights), 2)
 calcium = np.round(np.inner(recipe_data['calcium'], final_weights))
 saturated_fat = np.round(np.inner(recipe_data['saturated_fatty_acids'], final_weights))
+percentage_saturated_fat = np.round(saturated_fat * 9 / final_target[0] * 100, 2)
 
 print("-"*20)
 print(f"Energy: {final_target[0]}|{target[0]} ", 
@@ -31,7 +32,7 @@ print(f"Energy: {final_target[0]}|{target[0]} ",
       f"Carbohydrates: {final_target[3]}|{target[3]} ",
       f"Fibre: {final_target[4]}|{target[4]}")
 print(f"Calcium: {calcium}mg")
-print(f"Saturated fat: {saturated_fat}")
+print(f"Saturated fat: {saturated_fat} ({percentage_saturated_fat}%)")
 print("-"*20)
 for food, weight in zip(recipe_data['food'].values.tolist(), np.round(final_weights * 100, 2)):
     print(f'{food}: {weight}g'.capitalize())
