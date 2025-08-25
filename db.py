@@ -35,6 +35,45 @@ class Database:
         '''
         with self.lock:
             return self.conn.execute(query, (target_name, recipe_name,)).fetchall()
+
+    def update_recipe_minimum(self, target_name, recipe_name, food, new_minimum):
+        query = '''
+            UPDATE recipes
+            SET minimum=?
+            WHERE recipe_name=?
+            AND user_id = (SELECT id FROM targets WHERE name=?)
+            AND food_id = (SELECT id FROM nutritional_data WHERE food=?)
+        '''
+        new_minimum = None if new_minimum == '' else new_minimum
+        with self.lock:
+            self.conn.execute(query, (new_minimum, recipe_name, target_name, food,))
+            self.conn.commit()
+
+    def update_recipe_maximum(self, target_name, recipe_name, food, new_maximum):
+        query = '''
+            UPDATE recipes
+            SET maximum=?
+            WHERE recipe_name=?
+            AND user_id = (SELECT id FROM targets WHERE name=?)
+            AND food_id = (SELECT id FROM nutritional_data WHERE food=?)
+        '''
+        new_maximum = None if new_maximum == '' else new_maximum
+        with self.lock:
+            self.conn.execute(query, (new_maximum, recipe_name, target_name, food, ))
+            self.conn.commit()
+
+    def update_recipe_starting_amount(self, target_name, recipe_name, food, new_starting_amount):
+        query = '''
+            UPDATE recipes
+            SET starting_amount=?
+            WHERE recipe_name=?
+            AND user_id = (SELECT id FROM targets WHERE name=?)
+            AND food_id = (SELECT id FROM nutritional_data WHERE food=?)
+        '''
+        new_starting_amount = None if new_starting_amount == '' else new_starting_amount
+        with self.lock:
+            self.conn.execute(query, (new_starting_amount, recipe_name, target_name, food,))
+            self.conn.commit()
         
 
     def close(self):
