@@ -18,7 +18,7 @@ def update_starting_amount(sender, app_data, user_data):
     recipe = dpg.get_value('recipe')
     db.update_recipe_minimum(target, recipe, user_data, app_data)
 
-def update_recipe_bounds(sender, app_data, user_data):
+def update_recipe_bounds(sender=None, app_data=None, user_data=None):
     dpg.delete_item('recipe_bounds', children_only=True)
     target = dpg.get_value('target')
     recipe = dpg.get_value('recipe')
@@ -31,10 +31,28 @@ def update_recipe_bounds(sender, app_data, user_data):
         dpg.add_table_column(label='Starting amount')
         for row in bounds:
             with dpg.table_row():
-                dpg.add_text(row['food'])
-                dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], user_data=row['food'], on_enter=True, decimal=True, width=50, callback=update_minimum)
-                dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], user_data=row['food'], on_enter=True, decimal=True, width=50, callback=update_maximum)
-                dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], user_data=row['food'], on_enter=True, decimal=True, width=50, callback=update_starting_amount)
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label='X', user_data=row['food'], callback=remove_food_from_recipe)
+                    dpg.add_text(row['food'])
+                dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_minimum)
+                dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_maximum)
+                dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_starting_amount)
+
+def add_food_to_recipe(sender, app_data, user_data):
+    target = dpg.get_value('target')
+    recipe = dpg.get_value('recipe')
+    if target == '' or recipe == '':
+        return
+    db.add_food_to_recipe(target, recipe, app_data)
+    update_recipe_bounds()
+
+def remove_food_from_recipe(sender, app_data, user_data):
+    target = dpg.get_value('target')
+    recipe = dpg.get_value('recipe')
+    
+    db.remove_food_from_recipe(target, recipe, user_data)
+    update_recipe_bounds()
+
 
 def update_recipe_selection(sender, app_data, user_data):
     available_recipes = db.get_recipes_by_target(app_data)
@@ -42,7 +60,7 @@ def update_recipe_selection(sender, app_data, user_data):
 
 def show_dionysus():
     with dpg.font_registry():
-        default_font = dpg.add_font('./assets/JetBrainsMonoNL-Regular.ttf', 18)
+        default_font = dpg.add_font('./assets/JetBrainsMonoNL-Regular.ttf', 20)
     with dpg.window(tag='main'):
         dpg.bind_font(default_font)
         with dpg.group(horizontal=True):
@@ -54,6 +72,10 @@ def show_dionysus():
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
             pass
+        with dpg.group(horizontal=True):
+            dpg.add_text('Add food to recipe:')
+            dpg.add_combo(items=db.get_food_list(), width=100, no_preview=True, callback=add_food_to_recipe)
+
         dpg.add_separator()
         with dpg.group(tag='recipe_results'):
             pass
