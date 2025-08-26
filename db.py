@@ -104,15 +104,38 @@ class Database:
         with self.lock:
             rows = self.conn.execute('SELECT food FROM nutritional_data ORDER BY food').fetchall()
             return [row['food'] for row in rows]
-        
 
+    def update_nutritional_data(self, id, column, value):
+        query = f'''
+            UPDATE nutritional_data
+            SET {column} = ?
+            WHERE id = ?
+        '''
+        with self.lock:
+            self.conn.execute(query, (value, id))
+            self.conn.commit()
+
+    def get_nutritional_data(self):
+        with self.lock:
+            return self.conn.execute('SELECT * FROM nutritional_data ORDER BY food').fetchall()
+
+    def add_food_to_nutritional_data(self, food):
+        with self.lock:
+            self.conn.execute('INSERT INTO nutritional_data (food) VALUES (?)', (food,))
+            self.conn.commit()
+
+    def delete_food_from_nutritional_data(self, id):
+        with self.lock:
+            self.conn.execute('DELETE FROM nutritional_data WHERE id = ?', (id,))
+            self.conn.commit()
+        
     def close(self):
         self.conn.close()
 
 if __name__ == '__main__':
-    db = Database('./data/food.db')
+    db = Database('./data/test_db.db')
     
     print(db.get_recipes_by_target('luki'))
-    db.add_food_to_recipe('luki', 'obed ryza', 'bohnen')
+    db.add_food_to_nutritional_data('vinegar')
 
     db.close()
