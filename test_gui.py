@@ -1,6 +1,9 @@
 from operator import call
 import dearpygui.dearpygui as dpg
 from db import Database
+import numpy as np
+import pandas as pd
+from scipy.optimize import minimize
 
 db = Database("./data/test_db.db")
 
@@ -33,8 +36,9 @@ def bounds_table(bounds_rows: list):
 def update_recipe_bounds(sender, app_data, user_data):
     recipe = dpg.get_value('recipe')
     target = dpg.get_value('target')
-    db.update_recipe_bounds(recipe, target, user_data['food'], user_data['column'], app_data)
+    db.update_recipe_bounds(recipe, target, user_data['food'], user_data['column'], None if app_data == '' else app_data)
     recipe_bounds()
+    update_recipe_results()
 
 def add_ingredient(sender, app_data, user_data):
     target = dpg.get_value('target')
@@ -54,6 +58,55 @@ def remove_ingredient(sender, app_data, user_data):
 def update_recipe_selection(sender, app_data, user_data):
     available_recipes = db.recipes_by_target(app_data)
     dpg.configure_item('recipe', items=available_recipes)
+
+def show_bounds_and_calculate():
+    recipe_bounds()
+    update_recipe_results()
+
+def calculate_recipe(target, calculation_data) -> np.ndarray:
+    nutrition_matrix = calculation_data[db.calculation_columns.split(',')].to_numpy().T
+    bounds = calculation_data[['minimum', 'maximum']].to_numpy() / 100
+    initial_weights = calculation_data[['minimum', 'starting_amount']].max(axis=1) / 100
+    target = target.to_numpy()[0]
+    loss_function = lambda w: np.linalg.norm(target - np.dot(nutrition_matrix, w)) ** 2
+    res = minimize(loss_function, initial_weights, bounds=bounds)
+    return res.x
+
+def update_recipe_results():
+    dpg.delete_item('recipe_results', children_only=True)
+    target, calculation_data = db.calculation_data(dpg.get_value('target'), dpg.get_value('recipe'))
+    final_weights = calculate_recipe(target, calculation_data)
+
+    with dpg.group(parent='recipe_results'):
+        with dpg.table(tag='recipe_nutri_values', header_row=True):
+            dpg.add_table_column(label='nutrient')
+            dpg.add_table_column(label='final vlaue')
+            dpg.add_table_column(label='target value')
+        with dpg.table(tag='recipe_weights', header_row=True):
+            dpg.add_table_column(label='ingredient')
+            dpg.add_table_column(label='weight')
+    result_values_table(target, calculation_data, final_weights)
+    weights_table(calculation_data, final_weights)
+
+def result_values_table(target, calculation_data, final_weights):
+    columns = db.calculation_columns.split(',')
+    columns.append('calcium')
+    final_target = calculation_data[columns].mul(final_weights, axis=0).sum()
+    for nutrient in columns:
+        with dpg.table_row(parent='recipe_nutri_values'):
+            dpg.add_text(nutrient)
+            dpg.add_text(f'{final_target[nutrient]:.2f}')
+            try:
+                dpg.add_text(target[nutrient].squeeze())
+            except:
+                dpg.add_text('')
+
+def weights_table(calculation_data, final_weights):
+    weights = final_weights * 100
+    for ingredient, weight in zip(calculation_data['food'], weights):
+        with dpg.table_row(parent='recipe_weights'):
+            dpg.add_text(ingredient)
+            dpg.add_text(f'{weight:.2f}g')
 
 def update_nutrition_table():
     try:
@@ -120,7 +173,7 @@ def show_dionysus():
             dpg.add_text('Target:')
             dpg.add_combo(items=db.target_names(), fit_width=True, tag='target', callback=update_recipe_selection)
             dpg.add_text('Recipe:')
-            dpg.add_combo(items=(), fit_width=True, tag='recipe', callback=recipe_bounds)
+            dpg.add_combo(items=(), fit_width=True, tag='recipe', callback=show_bounds_and_calculate)
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):

@@ -11,7 +11,7 @@ class Database:
         self.db_path = Path(db_path)
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
-        self.calculation_columns = 'energy, protein, fatty_acids, saturated_fatty_acids, carbohydrates, fibre'
+        self.calculation_columns = 'energy,protein,fatty_acids,saturated_fatty_acids,carbohydrates,fibre'
 
     def target_names(self) -> list[str]:
         with self.lock:
@@ -114,13 +114,41 @@ class Database:
         with self.lock:
             return pd.read_sql_query(query, self.conn).to_numpy()[0]
 
+    def calculation_data(self, target, recipe) -> tuple[pd.DataFrame, pd.DataFrame]:
+        query1 = f'''
+            SELECT {self.calculation_columns} FROM targets
+            WHERE name = '{target}'
+        '''
+        query2 = f'''
+            SELECT nutritional_data.*,
+            recipes.minimum,
+            recipes.maximum,
+            recipes.starting_amount
+            FROM nutritional_data
+            JOIN recipes ON nutritional_data.id = recipes.food_id
+            JOIN targets ON recipes.target_id = targets.id
+            WHERE recipes.recipe = '{recipe}'
+            AND targets.name = '{target}'
+        '''
+        with self.lock:
+            target = pd.read_sql_query(query1, self.conn)
+            calculation_data = pd.read_sql_query(query2, self.conn)
+            calculation_data['energy'] -= calculation_data['protein'] * (1 - calculation_data['protein_digestibility']) * 4
+            calculation_data['protein'] *= calculation_data['protein_digestibility']
+            calculation_data.loc[calculation_data['minimum'].isna(), 'minimum'] = 0
+            calculation_data.loc[calculation_data['maximum'].isna(), 'maximum'] = np.inf
+            calculation_data.loc[calculation_data['starting_amount'].isna(), 'starting_amount'] = 0
+
+            return (target, calculation_data)
+
+
     def close(self):
         self.conn.close()
 
 if __name__ == '__main__':
     db = Database('./data/test_db.db')
     
-    print(db.recipes_by_target('luki'))
-    db.add_food_to_nutritional_data('vinegar')
-
+    target, calculation_data = db.calculation_data('luki', 'obed ryza')
+    print(target['protein'])
+    print(calculation_data[db.calculation_columns.split(',')])
     db.close()
