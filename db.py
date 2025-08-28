@@ -147,8 +147,10 @@ class Database:
 
 if __name__ == '__main__':
     db = Database('./data/test_db.db')
+    bounds = db.recipe_bounds('luki', 'test recipe')
+    print(bounds)
+
+    for row in bounds:
+        print(row[0].keys())
     
-    target, calculation_data = db.calculation_data('luki', 'obed ryza')
-    print(target['protein'])
-    print(calculation_data[db.calculation_columns.split(',')])
     db.close()

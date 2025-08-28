@@ -10,7 +10,12 @@ db = Database("./data/test_db.db")
 def recipe_bounds():
     dpg.delete_item('recipe_bounds', children_only=True)
     bounds = db.recipe_bounds(dpg.get_value('target'), dpg.get_value('recipe'))
-    bounds_table(bounds)
+    if bounds:
+        bounds_table(bounds)
+    else:
+        with dpg.table(header_row=True, parent='recipe_bounds', row_background=True, borders_innerV=True,
+                       borders_innerH=True, tag='bounds_table'):
+            dpg.add_table_column()
     with dpg.table_row(parent='bounds_table'):
         with dpg.group(horizontal=True):
             dpg.add_text('Add food to recipe:')
@@ -56,8 +61,11 @@ def remove_ingredient(sender, app_data, user_data):
     recipe_bounds()
 
 def update_recipe_selection(sender, app_data, user_data):
+    dpg.delete_item('recipe_bounds', children_only=True)
+    dpg.delete_item('recipe_results', children_only=True)
     available_recipes = db.recipes_by_target(app_data)
-    dpg.configure_item('recipe', items=available_recipes)
+    dpg.configure_item('recipe', items=available_recipes,)
+    dpg.set_value('recipe', '')
 
 def show_bounds_and_calculate():
     recipe_bounds()
@@ -95,11 +103,15 @@ def result_values_table(target, calculation_data, final_weights):
     for nutrient in columns:
         with dpg.table_row(parent='recipe_nutri_values'):
             dpg.add_text(nutrient)
-            dpg.add_text(f'{final_target[nutrient]:.2f}')
+            final_target_text = dpg.add_text(f'{final_target[nutrient]:.2f}')
             try:
                 dpg.add_text(target[nutrient].squeeze())
             except:
                 dpg.add_text('')
+        if nutrient == 'saturated_fatty_acids':
+            color = (251, 73, 52) if target[nutrient].squeeze() < final_target[nutrient] else (184, 187, 38)
+            dpg.configure_item(final_target_text, color=color)
+
 
 def weights_table(calculation_data, final_weights):
     weights = final_weights * 100
@@ -164,6 +176,11 @@ def delete_food_from_nutritional_data(sender, app_data, user_data):
     db.remove_food_from_nutritional_data(user_data)
     update_nutrition_table()
 
+def new_recipe():
+    dpg.set_value('recipe', dpg.get_value('new_recipe'))
+    dpg.set_value('new_recipe', '')
+    recipe_bounds()
+
 def show_dionysus():
     with dpg.font_registry():
         default_font = dpg.add_font('./assets/JetBrainsMonoNL-Regular.ttf', 20)
@@ -174,6 +191,14 @@ def show_dionysus():
             dpg.add_combo(items=db.target_names(), fit_width=True, tag='target', callback=update_recipe_selection)
             dpg.add_text('Recipe:')
             dpg.add_combo(items=(), fit_width=True, tag='recipe', callback=show_bounds_and_calculate)
+        with dpg.group(horizontal=True):
+            dpg.add_text('New recipe:')
+            dpg.add_input_text(hint='Recipe name...', width=250, tag='new_recipe')
+            dpg.add_button(label='Add recipe', callback=new_recipe)
+            dpg.add_spacer(width=100)
+            dpg.add_text('Copy recipe')
+            dpg.add_combo(items=db.target_names(), fit_width=True, tag='copy_target', callback=update_recipe_selection)
+            dpg.add_button(label='Copy')
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
