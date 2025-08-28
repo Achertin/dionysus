@@ -4,63 +4,55 @@ from db import Database
 
 db = Database("./data/test_db.db")
 
-def update_minimum(sender, app_data, user_data):
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    db.update_recipe_minimum(target, recipe, user_data, app_data)
-
-def update_maximum(sender, app_data, user_data):
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    db.update_recipe_minimum(target, recipe, user_data, app_data)
-
-def update_starting_amount(sender, app_data, user_data):
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    db.update_recipe_minimum(target, recipe, user_data, app_data)
-
-def update_recipe_bounds():
+def recipe_bounds():
     dpg.delete_item('recipe_bounds', children_only=True)
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    bounds = db.get_recipe_bounds(target, recipe)
+    bounds = db.recipe_bounds(dpg.get_value('target'), dpg.get_value('recipe'))
+    bounds_table(bounds)
+    with dpg.table_row(parent='bounds_table'):
+        with dpg.group(horizontal=True):
+            dpg.add_text('Add food to recipe:')
+            dpg.add_combo(items=db.food_list(), width=100, no_preview=True, callback=add_ingredient)
+
+def bounds_table(bounds_rows: list):
     with dpg.table(header_row=True, parent='recipe_bounds', row_background=True, borders_innerV=True,
-                   borders_innerH=True):
-        dpg.add_table_column(label='Food')
-        dpg.add_table_column(label='Minimum')
-        dpg.add_table_column(label='Maximum')
-        dpg.add_table_column(label='Starting amount')
-        for row in bounds:
+                   borders_innerH=True, tag='bounds_table'):
+        for column in bounds_rows[0].keys():
+            dpg.add_table_column(label=column)
+        for row in bounds_rows:
             with dpg.table_row():
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label='X', user_data=row['food'], callback=remove_food_from_recipe)
+                    dpg.add_button(label='X', user_data=row['food'], callback=remove_ingredient)
                     dpg.add_text(row['food'])
-                dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_minimum)
-                dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_maximum)
-                dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], user_data=row['food'], on_enter=True, decimal=True, width=100, callback=update_starting_amount)
-        with dpg.table_row():
-            with dpg.group(horizontal=True):
-                dpg.add_text('Add food to recipe:')
-                dpg.add_combo(items=db.get_food_list(), width=100, no_preview=True, callback=add_food_to_recipe)
+                dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], 
+                                   user_data={'food': row['food'], 'column': 'minimum'}, on_enter=True, decimal=True, width=100, callback=update_recipe_bounds)
+                dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], 
+                                   user_data={'food': row['food'], 'column': 'maximum'}, on_enter=True, decimal=True, width=100, callback=update_recipe_bounds)
+                dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], 
+                                   user_data={'food': row['food'], 'column': 'starting_amount'}, on_enter=True, decimal=True, width=100, callback=update_recipe_bounds)
 
-def add_food_to_recipe(sender, app_data, user_data):
+def update_recipe_bounds(sender, app_data, user_data):
+    recipe = dpg.get_value('recipe')
+    target = dpg.get_value('target')
+    db.update_recipe_bounds(recipe, target, user_data['food'], user_data['column'], app_data)
+    recipe_bounds()
+
+def add_ingredient(sender, app_data, user_data):
     target = dpg.get_value('target')
     recipe = dpg.get_value('recipe')
     if target == '' or recipe == '':
         return
-    db.add_food_to_recipe(target, recipe, app_data)
-    update_recipe_bounds()
+    db.add_ingredient(target, recipe, app_data)
+    recipe_bounds()
 
-def remove_food_from_recipe(sender, app_data, user_data):
+def remove_ingredient(sender, app_data, user_data):
     target = dpg.get_value('target')
     recipe = dpg.get_value('recipe')
     
-    db.remove_food_from_recipe(target, recipe, user_data)
-    update_recipe_bounds()
-
+    db.remove_ingredient(target, recipe, user_data)
+    recipe_bounds()
 
 def update_recipe_selection(sender, app_data, user_data):
-    available_recipes = db.get_recipes_by_target(app_data)
+    available_recipes = db.recipes_by_target(app_data)
     dpg.configure_item('recipe', items=available_recipes)
 
 def update_nutrition_table():
@@ -71,16 +63,24 @@ def update_nutrition_table():
         scroll_x = 0
         scroll_y = 0
     dpg.delete_item('nutritional_data', children_only=True)
-    rows = db.get_nutritional_data()
-    
+    rows = db.nutritional_data()
+    nutritional_table(rows)
+    with dpg.table_row(parent='nutritional_table'):
+        with dpg.group(horizontal=True,):
+            dpg.add_input_text(hint='Add new food', user_data='food', on_enter=True, width=300, callback=add_food_to_nutritional_table)
+
+    dpg.set_x_scroll('nutritional_table', scroll_x)
+    dpg.set_y_scroll('nutritional_table', scroll_y)
+
+def nutritional_table(nutritional_rows):
     with dpg.table(header_row=True, row_background=True, borders_innerH=True, borders_innerV=True,
                    scrollX=True, resizable=True, hideable=True, scrollY=True, height=500, 
                    freeze_rows=1, parent='nutritional_data', tag='nutritional_table'):
-        for header in rows[0].keys():
+        for header in nutritional_rows[0].keys():
             if header == 'id':
                 continue
             dpg.add_table_column(label=header, width_fixed=True)
-        for row in rows:
+        for row in nutritional_rows:
             with dpg.table_row(filter_key=row['food']):
                 for key in row.keys():
                     if key == 'id':
@@ -93,12 +93,6 @@ def update_nutrition_table():
                     dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
                                        on_enter=True, width=100, decimal=True, callback=update_nutrition_value,
                                        auto_select_all=True)
-        with dpg.table_row():
-            with dpg.group(horizontal=True,):
-                dpg.add_input_text(hint='Add new food', user_data='food', on_enter=True, width=300, callback=add_food_to_nutritional_table)
-
-    dpg.set_x_scroll('nutritional_table', scroll_x)
-    dpg.set_y_scroll('nutritional_table', scroll_y)
 
 def update_nutrition_value(sender, app_data, user_data):
     if app_data == '':
@@ -114,7 +108,7 @@ def add_food_to_nutritional_table(sender, app_data, user_data):
     update_nutrition_table()
 
 def delete_food_from_nutritional_data(sender, app_data, user_data):
-    db.delete_food_from_nutritional_data(user_data)
+    db.remove_food_from_nutritional_data(user_data)
     update_nutrition_table()
 
 def show_dionysus():
@@ -124,9 +118,9 @@ def show_dionysus():
         dpg.bind_font(default_font)
         with dpg.group(horizontal=True):
             dpg.add_text('Target:')
-            dpg.add_combo(items=db.get_target_names(), fit_width=True, tag='target', callback=update_recipe_selection)
+            dpg.add_combo(items=db.target_names(), fit_width=True, tag='target', callback=update_recipe_selection)
             dpg.add_text('Recipe:')
-            dpg.add_combo(items=(), fit_width=True, tag='recipe', callback=update_recipe_bounds)
+            dpg.add_combo(items=(), fit_width=True, tag='recipe', callback=recipe_bounds)
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
