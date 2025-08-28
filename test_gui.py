@@ -163,7 +163,8 @@ def nutritional_table(nutritional_rows):
                                 with dpg.group(horizontal=True):
                                     dpg.add_button(label='Yes', user_data={'food_id': row['id'], 'popup_id': remove_food}, callback=delete_food_from_nutritional_data)
                                     dpg.add_button(label='Cancel', user_data=remove_food, callback=lambda s, a, u: dpg.configure_item(u, show=False))
-                            dpg.add_text(row[key])
+                            dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
+                                               on_enter=True, width=250, callback=update_nutrition_value)
                         continue
                     dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
                                        on_enter=True, width=100, decimal=True, callback=update_nutrition_value,
