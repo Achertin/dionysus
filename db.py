@@ -79,7 +79,7 @@ class Database:
     
     def food_list(self) -> list[str]:
         with self.lock:
-            rows = self.conn.execute('SELECT food FROM nutritional_data ORDER BY food').fetchall()
+            rows = self.conn.execute('SELECT food FROM nutritional_data ORDER BY food COLLATE NOCASE').fetchall()
             return [row['food'] for row in rows]
 
     def update_nutritional_data(self, id, column, value):
@@ -94,7 +94,7 @@ class Database:
 
     def nutritional_data(self) -> list:
         with self.lock:
-            return self.conn.execute('SELECT * FROM nutritional_data ORDER BY food').fetchall()
+            return self.conn.execute('SELECT * FROM nutritional_data ORDER BY food COLLATE NOCASE').fetchall()
 
     def add_food_to_nutritional_data(self, food):
         with self.lock:
@@ -140,7 +140,17 @@ class Database:
             calculation_data.loc[calculation_data['starting_amount'].isna(), 'starting_amount'] = 0
 
             return (target, calculation_data)
-
+    
+    def copy_recipe(self, recipe, target, new_target, new_name):
+        query = f'''
+            INSERT INTO recipes (target_id, recipe, food_id, minimum, maximum, starting_amount)
+            SELECT (SELECT id FROM targets WHERE name = ?), ?, food_id, minimum, maximum, starting_amount
+            FROM recipes
+            WHERE recipe = ? AND (SELECT id FROM targets WHERE name = ?) 
+        '''
+        with self.lock:
+            self.conn.execute(query, (new_target, new_name, recipe, target))
+            self.conn.commit()
 
     def close(self):
         self.conn.close()

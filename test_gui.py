@@ -19,7 +19,7 @@ def recipe_bounds():
     with dpg.table_row(parent='bounds_table'):
         with dpg.group(horizontal=True):
             dpg.add_text('Add food to recipe:')
-            dpg.add_combo(items=db.food_list(), width=100, no_preview=True, callback=add_ingredient)
+            dpg.add_combo(items=db.food_list(), width=100, no_preview=True, callback=add_ingredient, tag='add_ingredient_to_recipe')
 
 def bounds_table(bounds_rows: list):
     with dpg.table(header_row=True, parent='recipe_bounds', row_background=True, borders_innerV=True,
@@ -51,7 +51,9 @@ def add_ingredient(sender, app_data, user_data):
     if target == '' or recipe == '':
         return
     db.add_ingredient(target, recipe, app_data)
+    dpg.configure_item('recipe', items=db.recipes_by_target(dpg.get_value('target')))
     recipe_bounds()
+    update_recipe_results()
 
 def remove_ingredient(sender, app_data, user_data):
     target = dpg.get_value('target')
@@ -59,6 +61,7 @@ def remove_ingredient(sender, app_data, user_data):
     
     db.remove_ingredient(target, recipe, user_data)
     recipe_bounds()
+    update_recipe_results()
 
 def update_recipe_selection(sender, app_data, user_data):
     dpg.delete_item('recipe_bounds', children_only=True)
@@ -83,6 +86,8 @@ def calculate_recipe(target, calculation_data) -> np.ndarray:
 def update_recipe_results():
     dpg.delete_item('recipe_results', children_only=True)
     target, calculation_data = db.calculation_data(dpg.get_value('target'), dpg.get_value('recipe'))
+    if calculation_data.empty:
+        return
     final_weights = calculate_recipe(target, calculation_data)
 
     with dpg.group(parent='recipe_results'):
@@ -152,7 +157,12 @@ def nutritional_table(nutritional_rows):
                         continue
                     if key == 'food':
                         with dpg.group(horizontal=True):
-                            dpg.add_button(label='X', user_data=row['id'], callback=delete_food_from_nutritional_data)
+                            dpg.add_button(label='X', user_data=row['id'])
+                            with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left) as remove_food:
+                                dpg.add_text(f'Are you sure you want to remove {row['food']} from the table?')
+                                with dpg.group(horizontal=True):
+                                    dpg.add_button(label='Yes', user_data={'food_id': row['id'], 'popup_id': remove_food}, callback=delete_food_from_nutritional_data)
+                                    dpg.add_button(label='Cancel', user_data=remove_food, callback=lambda s, a, u: dpg.configure_item(u, show=False))
                             dpg.add_text(row[key])
                         continue
                     dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
@@ -165,21 +175,61 @@ def update_nutrition_value(sender, app_data, user_data):
         return
     db.update_nutritional_data(user_data['id'], user_data['column'], app_data)
     update_nutrition_table()
+    filter_nutri_table('nutri_filter', None, 'nutritional_table')
 
 def add_food_to_nutritional_table(sender, app_data, user_data):
     if app_data == '':
         return
     db.add_food_to_nutritional_data(app_data)
     update_nutrition_table()
+    dpg.configure_item('add_ingredient_to_recipe', items=db.food_list())
 
 def delete_food_from_nutritional_data(sender, app_data, user_data):
-    db.remove_food_from_nutritional_data(user_data)
+    db.remove_food_from_nutritional_data(user_data['food_id'])
     update_nutrition_table()
+    dpg.configure_item(user_data['popup_id'], show=False)
+
+def filter_nutri_table(sender, app_data, user_data):
+    dpg.set_value(user_data, dpg.get_value(sender))
 
 def new_recipe():
+    if dpg.get_value('target') == '':
+        dpg.set_value('new_recipe', '')
+        return
     dpg.set_value('recipe', dpg.get_value('new_recipe'))
     dpg.set_value('new_recipe', '')
+    dpg.delete_item('recipe_results', children_only=True)
     recipe_bounds()
+
+def copy_recipe():
+    copy_target = dpg.get_value('copy_target')
+    new_name = dpg.get_value('copy_new_name')
+    target = dpg.get_value('target')
+    recipe = dpg.get_value('recipe')
+    if copy_target == '':
+        dpg.set_value('copy_warning', 'Please select a target')
+        dpg.show_item('copy_warning')
+        return
+    if new_name == '':
+        dpg.set_value('copy_warning', 'Please select a new name')
+        dpg.show_item('copy_warning')
+        return
+    if new_name in db.recipes_by_target(copy_target):
+        dpg.set_value('copy_warning', f'Recipe already exists for {copy_target}')
+        dpg.show_item('copy_warning')
+        return
+    if target == '':
+        dpg.set_value('copy_warning', 'No source target selected')
+        dpg.show_item('copy_warning')
+        return
+    if recipe == '':
+        dpg.set_value('copy_warning', 'No source recipe selected')
+        dpg.show_item('copy_warning')
+        return
+    dpg.hide_item('copy_warning')
+    db.copy_recipe(recipe, target, copy_target, new_name)
+    dpg.configure_item('copy_recipe_popup', show=False)
+
 
 def show_dionysus():
     with dpg.font_registry():
@@ -196,9 +246,19 @@ def show_dionysus():
             dpg.add_input_text(hint='Recipe name...', width=250, tag='new_recipe')
             dpg.add_button(label='Add recipe', callback=new_recipe)
             dpg.add_spacer(width=100)
-            dpg.add_text('Copy recipe')
-            dpg.add_combo(items=db.target_names(), fit_width=True, tag='copy_target', callback=update_recipe_selection)
-            dpg.add_button(label='Copy')
+            dpg.add_button(label='Copy recipe')
+            with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left, tag='copy_recipe_popup'):
+                dpg.add_text('Copying current recipe to')
+                with dpg.group(horizontal=True):
+                    dpg.add_text('Target:  ')
+                    dpg.add_combo(items=db.target_names(), tag='copy_target')
+                with dpg.group(horizontal=True):
+                    dpg.add_text('New name:')
+                    dpg.add_input_text(hint='Enter new name here...', tag='copy_new_name', auto_select_all=True)
+                dpg.add_text('Warning!', show=False, tag='copy_warning', color=(251, 73, 52))
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label='Copy', width=75, callback=copy_recipe)
+                    dpg.add_button(label='Cancel', width=75, callback=lambda: dpg.configure_item('copy_recipe_popup', show=False))
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
@@ -211,7 +271,7 @@ def show_dionysus():
         with dpg.collapsing_header(label='Nutritional Data'):
             with dpg.group(horizontal=True):
                 dpg.add_text('Filter food:')
-                dpg.add_input_text(width=500, user_data='nutritional_table', callback=lambda s, a, u: dpg.set_value(u, dpg.get_value(s)))
+                dpg.add_input_text(width=500, user_data='nutritional_table', callback=filter_nutri_table, tag='nutri_filter')
             with dpg.group(tag='nutritional_data'):
                 update_nutrition_table()
 
