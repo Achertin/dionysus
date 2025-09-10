@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-db = Database()
+db = Database('./data/food.db')
 
 def recipe_bounds():
     dpg.delete_item('recipe_bounds', children_only=True)
@@ -104,6 +104,7 @@ def update_recipe_results():
 def result_values_table(target, calculation_data, final_weights):
     columns = db.calculation_columns.split(',')
     columns.append('calcium')
+    columns.append('iodine')
     final_target = calculation_data[columns].mul(final_weights, axis=0).sum()
     for nutrient in columns:
         with dpg.table_row(parent='recipe_nutri_values'):
