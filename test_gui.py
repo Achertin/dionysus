@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-db = Database("./data/test_db.db")
+db = Database()
 
 def recipe_bounds():
     dpg.delete_item('recipe_bounds', children_only=True)
