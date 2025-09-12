@@ -2,7 +2,6 @@ from operator import call
 import dearpygui.dearpygui as dpg
 from db import Database
 import numpy as np
-import pandas as pd
 from scipy.optimize import minimize
 
 db = Database()
