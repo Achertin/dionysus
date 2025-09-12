@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from pathlib import Path
 import threading
 import pandas as pd
@@ -6,9 +7,9 @@ import numpy as np
 
 
 class Database:
-    def __init__(self, db_path='./data/app.db'):
+    def __init__(self, db_path='$HOME/.local/share/dionysus/food.db'):
         self.lock = threading.Lock()
-        self.db_path = Path(db_path)
+        self.db_path = Path(os.path.expandvars(db_path))
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.calculation_columns = 'energy,protein,fatty_acids,saturated_fatty_acids,carbohydrates,fibre'

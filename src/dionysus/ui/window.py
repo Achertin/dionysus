@@ -1,10 +1,7 @@
-from operator import call
-import dearpygui.dearpygui as dpg
-from db import Database
 import numpy as np
 from scipy.optimize import minimize
-
-db = Database()
+from dionysus.core.state import db
+import dearpygui.dearpygui as dpg
 
 def recipe_bounds():
     dpg.delete_item('recipe_bounds', children_only=True)
@@ -233,9 +230,11 @@ def copy_recipe():
 
 def show_dionysus():
     with dpg.font_registry():
-        default_font = dpg.add_font('./assets/JetBrainsMonoNL-Regular.ttf', 20)
+        default_font = dpg.add_font('../assets/JetBrainsMonoNL-Regular.ttf', 20)
     with dpg.window(tag='main'):
         dpg.bind_font(default_font)
+        with dpg.group(tag='calculator'):
+            pass
         with dpg.group(horizontal=True):
             dpg.add_text('Target:')
             dpg.add_combo(items=db.target_names(), fit_width=True, tag='target', callback=update_recipe_selection)
@@ -277,18 +276,4 @@ def show_dionysus():
 
         with dpg.collapsing_header(label='Targets'):
             pass
-        
-
-
-dpg.create_context()
-dpg.create_viewport(title='Dionysus', width=600, height=300)
-
-show_dionysus()
-
-dpg.setup_dearpygui()
-dpg.show_viewport()
-dpg.set_primary_window('main', True)
-dpg.start_dearpygui()
-dpg.destroy_context()
-
-db.close()
+ 
