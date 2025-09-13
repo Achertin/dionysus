@@ -35,7 +35,7 @@ def show_dionysus():
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
-            with dpg.table(header_row=True, row_background=True, borders_innerV=True, borders_innerH=True, tag='recipe_bounds_table', show=True):
+            with dpg.table(header_row=True, row_background=True, borders_innerV=True, borders_innerH=True, tag='recipe_bounds_table', resizable=True, show=False):
                 dpg.add_table_column(label='ingredient')
                 dpg.add_table_column(label='minimum')
                 dpg.add_table_column(label='maximum')

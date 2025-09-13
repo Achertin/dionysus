@@ -10,28 +10,31 @@ app_state = {
 # recipe calculator
 def draw_recipe_bounds_table():
     if not app_state['target'] or not app_state['recipe']:
-        clear_bounds_table_rows()
+        clear_bounds_table()
         dpg.hide_item('recipe_bounds_table')
         return
     dpg.show_item('recipe_bounds_table')
-    clear_bounds_table_rows()
+    clear_bounds_table()
     bounds = db.recipe_bounds(app_state['target'], app_state['recipe'])
 
     for row in bounds:
         with dpg.table_row(parent='recipe_bounds_table'):
             with dpg.group(horizontal=True):
-                dpg.add_button(label='X', user_data=row['food'])
+                dpg.add_button(label='X', user_data=row['food'], callback=on_remove_ingredient)
                 dpg.add_text(row['food'])
-            dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], user_data={'food': row['food'], 'column': 'minimum'}, on_enter=True, decimal=True, width=100)
-            dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], user_data={'food': row['food'], 'column': 'maximum'}, on_enter=True, decimal=True, width=100)
-            dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], user_data={'food': row['food'], 'column': 'starting_amount'}, on_enter=True, decimal=True, width=100)
+            dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], 
+                               user_data={'food': row['food'], 'column': 'minimum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
+            dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], 
+                               user_data={'food': row['food'], 'column': 'maximum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
+            dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], 
+                               user_data={'food': row['food'], 'column': 'starting_amount'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
     
     with dpg.table_row(parent='recipe_bounds_table'):
         with dpg.group(horizontal=True):
             dpg.add_text('Add food to recipe:')
-            dpg.add_combo(width=100, no_preview=True, tag='add_ingredient_to_recipe')
+            dpg.add_combo(items=db.food_list(), width=100, no_preview=True, tag='ingredient_add_combo', callback=on_add_ingredient)
 
-def clear_bounds_table_rows():
+def clear_bounds_table():
     rows = dpg.get_item_children('recipe_bounds_table', slot=1)
     if not rows:
         return
@@ -61,47 +64,19 @@ def update_recipe_list():
         dpg.set_value('recipe_combo', '')
     dpg.configure_item('recipe_combo', items=recipes)
 
-def recipe_bounds():
-    pass
+def on_bound_change(sender, app_data, user_data):
+    db.update_recipe_bounds(app_state['recipe'], app_state['target'], user_data['food'], user_data['column'], None if app_data == '' else app_data)
+    update_recipe_calculator()
 
-def bounds_table(bounds_rows: list):
-    pass
-
-def update_recipe_bounds(sender, app_data, user_data):
-    recipe = dpg.get_value('recipe')
-    target = dpg.get_value('target')
-    db.update_recipe_bounds(recipe, target, user_data['food'], user_data['column'], None if app_data == '' else app_data)
-    recipe_bounds()
-    update_recipe_results()
-
-def add_ingredient(sender, app_data, user_data):
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    if target == '' or recipe == '':
+def on_add_ingredient(sender, app_data, user_data):
+    if not app_state['target'] or not app_state['recipe']:
         return
-    db.add_ingredient(target, recipe, app_data)
-    dpg.configure_item('recipe', items=db.recipes_by_target(dpg.get_value('target')))
-    recipe_bounds()
-    update_recipe_results()
+    db.add_ingredient(app_state['target'], app_state['recipe'], app_data)
+    update_recipe_calculator()
 
-def remove_ingredient(sender, app_data, user_data):
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    
-    db.remove_ingredient(target, recipe, user_data)
-    recipe_bounds()
-    update_recipe_results()
-
-def update_recipe_selection(sender, app_data, user_data):
-    dpg.delete_item('recipe_bounds', children_only=True)
-    dpg.delete_item('recipe_results', children_only=True)
-    available_recipes = db.recipes_by_target(app_data)
-    dpg.configure_item('recipe', items=available_recipes,)
-    dpg.set_value('recipe', '')
-
-def show_bounds_and_calculate():
-    recipe_bounds()
-    update_recipe_results()
+def on_remove_ingredient(sender, app_data, user_data):
+    db.remove_ingredient(app_state['target'], app_state['recipe'], user_data)
+    update_recipe_calculator()
 
 def calculate_recipe(target, calculation_data) -> np.ndarray:
     nutrition_matrix = calculation_data[db.calculation_columns.split(',')].to_numpy().T
@@ -143,7 +118,7 @@ def result_values_table(target, calculation_data, final_weights):
             except:
                 dpg.add_text('')
         if nutrient == 'saturated_fatty_acids':
-            color = (251, 73, 52) if target[nutrient].squeeze() < final_target[nutrient] else (184, 187, 38)
+            color = (251, 73, 52) if target[nutrient].squeeze() <= final_target[nutrient] else (184, 187, 38)
             dpg.configure_item(final_target_text, color=color)
 
 
