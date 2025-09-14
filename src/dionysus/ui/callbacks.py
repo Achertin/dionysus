@@ -185,7 +185,20 @@ def copy_recipe_confirm(copy_data, popup_id):
     dpg.delete_item(popup_id)
 
 def on_rename_recipe(sende, app_data, user_data):
-    pass
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        if not app_state['target']:
+            dpg.add_text('No source target selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        elif not app_state['recipe']:
+            dpg.add_text('No source recipe selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        else:
+            with dpg.group(horizontal=True):
+                dpg.add_text('New name:')
+                dpg.add_input_text(default_value=app_state['recipe'])
+            with dpg.group(horizontal=True):
+                dpg.add_button(label='Rename')
+                dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
 
 def on_delete_recipe(sende, app_data, user_data):
     pass
