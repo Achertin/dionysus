@@ -1,3 +1,4 @@
+from ast import Tuple
 import dearpygui.dearpygui as dpg
 from dionysus.core.state import db
 import numpy as np
@@ -22,7 +23,7 @@ def draw_recipe_bounds_table():
                 dpg.add_button(label='X', user_data=row['food'], callback=on_remove_ingredient)
                 dpg.add_text(row['food'])
             dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], 
-                               user_data={'food': row['food'], 'column': 'minimum'}, on_enter=False, decimal=True, width=100, callback=on_bound_change)
+                               user_data={'food': row['food'], 'column': 'minimum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
             dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], 
                                user_data={'food': row['food'], 'column': 'maximum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
             dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], 
@@ -135,6 +136,63 @@ def update_recipe_results():
     draw_recipe_weights(calculation_data, final_weights)
     dpg.show_item('calculation_results')
 
+def center_recipe_popup(popup_id):
+    main_widht = dpg.get_viewport_width() or 0
+    main_height = dpg.get_viewport_height() or 0
+    popup_width = dpg.get_item_width(popup_id) or 0
+    popup_height = dpg.get_item_height(popup_id) or 0
+    pos_x = (main_widht - popup_width) // 2
+    pos_y = (main_height - popup_height) // 2
+    dpg.set_item_pos(popup_id, pos=[pos_x, pos_y])
+
+def on_copy_recipe(sender, app_data, user_data):
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        if not app_state['target']:
+            dpg.add_text('No source target selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        elif not app_state['recipe']:
+            dpg.add_text('No source recipe selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        else:
+            copy_data = {
+                    'new_target': None,
+                    'new_name': app_state['recipe'],
+                    }
+            with dpg.group(horizontal=True):
+                dpg.add_text('New target:     ')
+                dpg.add_combo(items=db.target_names(), tag='new_recipe_target', callback=lambda s, a, u: copy_data.update({'new_target': a}))
+            with dpg.group(horizontal=True):
+                dpg.add_text('New recipe name:')
+                dpg.add_input_text(default_value=app_state['recipe'], tag='new_recipe_name', callback=lambda s, a, u: copy_data.update({'new_name': a}))
+            with dpg.group(horizontal=True):
+                dpg.add_button(label='Copy', callback=lambda s, a, u: copy_recipe_confirm(copy_data, popup_id))
+                dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+    dpg.set_frame_callback(1, lambda: center_recipe_popup)
+
+def copy_recipe_confirm(copy_data, popup_id):
+    if not copy_data['new_target'] or not copy_data['new_name']:
+        dpg.add_text('Make sure all fields are filled in', color=(251, 73, 52), parent=popup_id)
+        return
+    if copy_data['new_name'] in db.recipes_by_target(copy_data['new_target']):
+        dpg.add_text('Recipe already exists for that target', color=(251, 73, 52), parent=popup_id)
+        return
+    db.copy_recipe(app_state['recipe'], app_state['target'], copy_data['new_target'], copy_data['new_name'])
+    app_state['target'] = copy_data['new_target']
+    app_state['recipe'] = copy_data['new_name']
+    dpg.set_value('target_combo', app_state['target'])
+    dpg.set_value('recipe_combo', app_state['recipe'])
+    update_recipe_calculator()
+    dpg.delete_item(popup_id)
+
+def on_rename_recipe(sende, app_data, user_data):
+    pass
+
+def on_delete_recipe(sende, app_data, user_data):
+    pass
+
+def on_add_recipe(sende, app_data, user_data):
+    pass
+
 # nutritional table
 def update_nutrition_table():
     try:
@@ -203,41 +261,3 @@ def delete_food_from_nutritional_data(sender, app_data, user_data):
 
 def filter_nutri_table(sender, app_data, user_data):
     dpg.set_value(user_data, dpg.get_value(sender))
-
-def new_recipe():
-    if dpg.get_value('target') == '':
-        dpg.set_value('new_recipe', '')
-        return
-    dpg.set_value('recipe', dpg.get_value('new_recipe'))
-    dpg.set_value('new_recipe', '')
-    dpg.delete_item('recipe_results', children_only=True)
-    recipe_bounds()
-
-def copy_recipe():
-    copy_target = dpg.get_value('copy_target')
-    new_name = dpg.get_value('copy_new_name')
-    target = dpg.get_value('target')
-    recipe = dpg.get_value('recipe')
-    if copy_target == '':
-        dpg.set_value('copy_warning', 'Please select a target')
-        dpg.show_item('copy_warning')
-        return
-    if new_name == '':
-        dpg.set_value('copy_warning', 'Please select a new name')
-        dpg.show_item('copy_warning')
-        return
-    if new_name in db.recipes_by_target(copy_target):
-        dpg.set_value('copy_warning', f'Recipe already exists for {copy_target}')
-        dpg.show_item('copy_warning')
-        return
-    if target == '':
-        dpg.set_value('copy_warning', 'No source target selected')
-        dpg.show_item('copy_warning')
-        return
-    if recipe == '':
-        dpg.set_value('copy_warning', 'No source recipe selected')
-        dpg.show_item('copy_warning')
-        return
-    dpg.hide_item('copy_warning')
-    db.copy_recipe(recipe, target, copy_target, new_name)
-    dpg.configure_item('copy_recipe_popup', show=False)

@@ -13,25 +13,11 @@ def show_dionysus():
                 dpg.add_combo(items=db.target_names(), fit_width=True, tag='target_combo', callback=ds.on_target_change)
                 dpg.add_text('Recipe:')
                 dpg.add_combo(fit_width=True, tag='recipe_combo', callback=ds.on_recipe_change)
-                dpg.add_spacer(width=100)
-                dpg.add_button(label='Copy recipe')
-                with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left, tag='copy_recipe_popup'):
-                    dpg.add_text('Copying current recipe to')
-                    with dpg.group(horizontal=True):
-                        dpg.add_text('Target:  ')
-                        dpg.add_combo(tag='copy_target')
-                    with dpg.group(horizontal=True):
-                        dpg.add_text('New name:')
-                        dpg.add_input_text(hint='Enter new name here...', tag='copy_new_name', auto_select_all=True)
-                    dpg.add_text('Warning!', show=False, tag='copy_warning', color=(251, 73, 52))
-                    with dpg.group(horizontal=True):
-                        dpg.add_button(label='Copy', width=75)
-                        dpg.add_button(label='Cancel', width=75)
             with dpg.group(horizontal=True):
-                dpg.add_text('New recipe:')
-                dpg.add_input_text(hint='Recipe name...', width=250, tag='new_recipe')
                 dpg.add_button(label='Add recipe')
-                dpg.add_spacer(width=100)
+                dpg.add_button(label='Rename recipe')
+                dpg.add_button(label='Copy recipe', callback=ds.on_copy_recipe)
+                dpg.add_button(label='Delete recipe')
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):
