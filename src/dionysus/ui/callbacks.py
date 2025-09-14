@@ -22,7 +22,7 @@ def draw_recipe_bounds_table():
                 dpg.add_button(label='X', user_data=row['food'], callback=on_remove_ingredient)
                 dpg.add_text(row['food'])
             dpg.add_input_text(default_value='' if row['minimum'] is None else row['minimum'], 
-                               user_data={'food': row['food'], 'column': 'minimum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
+                               user_data={'food': row['food'], 'column': 'minimum'}, on_enter=False, decimal=True, width=100, callback=on_bound_change)
             dpg.add_input_text(default_value='' if row['maximum'] is None else row['maximum'], 
                                user_data={'food': row['food'], 'column': 'maximum'}, on_enter=True, decimal=True, width=100, callback=on_bound_change)
             dpg.add_input_text(default_value='' if row['starting_amount'] is None else row['starting_amount'], 
