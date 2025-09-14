@@ -42,8 +42,14 @@ def show_dionysus():
                 dpg.add_table_column(label='starting amount')
 
         dpg.add_separator()
-        with dpg.group(tag='calculation_results'):
-            pass
+        with dpg.group(tag='calculation_results', show=False):
+            with dpg.table(tag='recipe_nutri_values', header_row=True):
+                dpg.add_table_column(label='nutrient')
+                dpg.add_table_column(label='final vlaue')
+                dpg.add_table_column(label='target value')
+            with dpg.table(tag='recipe_weights', header_row=True):
+                dpg.add_table_column(label='ingredient')
+                dpg.add_table_column(label='weight')
 
         with dpg.collapsing_header(label='Nutritional Data'):
             with dpg.group(horizontal=True):

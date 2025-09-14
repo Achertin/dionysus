@@ -10,10 +10,9 @@ app_state = {
 # recipe calculator
 def draw_recipe_bounds_table():
     if not app_state['target'] or not app_state['recipe']:
-        clear_bounds_table()
         dpg.hide_item('recipe_bounds_table')
+        clear_bounds_table()
         return
-    dpg.show_item('recipe_bounds_table')
     clear_bounds_table()
     bounds = db.recipe_bounds(app_state['target'], app_state['recipe'])
 
@@ -33,6 +32,7 @@ def draw_recipe_bounds_table():
         with dpg.group(horizontal=True):
             dpg.add_text('Add food to recipe:')
             dpg.add_combo(items=db.food_list(), width=100, no_preview=True, tag='ingredient_add_combo', callback=on_add_ingredient)
+    dpg.show_item('recipe_bounds_table')
 
 def clear_bounds_table():
     rows = dpg.get_item_children('recipe_bounds_table', slot=1)
@@ -45,6 +45,7 @@ def update_recipe_calculator():
     update_target_list()
     update_recipe_list()
     draw_recipe_bounds_table()
+    update_recipe_results()
 
 def on_target_change(sender, app_data, user_data):
     app_state['target'] = app_data
@@ -78,34 +79,17 @@ def on_remove_ingredient(sender, app_data, user_data):
     db.remove_ingredient(app_state['target'], app_state['recipe'], user_data)
     update_recipe_calculator()
 
-def calculate_recipe(target, calculation_data) -> np.ndarray:
-    nutrition_matrix = calculation_data[db.calculation_columns.split(',')].to_numpy().T
-    bounds = calculation_data[['minimum', 'maximum']].to_numpy() / 100
-    initial_weights = calculation_data[['minimum', 'starting_amount']].max(axis=1) / 100
-    target = target.to_numpy()[0]
-    loss_function = lambda w: np.linalg.norm(target - np.dot(nutrition_matrix, w)) ** 2
-    res = minimize(loss_function, initial_weights, bounds=bounds)
-    return res.x
+def clear_calculation_results():
+    nutri_rows = dpg.get_item_children('recipe_nutri_values', slot=1)
+    weight_rows = dpg.get_item_children('recipe_weights', slot=1)
+    if nutri_rows:
+        for row in nutri_rows:
+            dpg.delete_item(row)
+    if weight_rows:
+        for row in weight_rows:
+            dpg.delete_item(row)
 
-def update_recipe_results():
-    dpg.delete_item('recipe_results', children_only=True)
-    target, calculation_data = db.calculation_data(dpg.get_value('target'), dpg.get_value('recipe'))
-    if calculation_data.empty:
-        return
-    final_weights = calculate_recipe(target, calculation_data)
-
-    with dpg.group(parent='recipe_results'):
-        with dpg.table(tag='recipe_nutri_values', header_row=True):
-            dpg.add_table_column(label='nutrient')
-            dpg.add_table_column(label='final vlaue')
-            dpg.add_table_column(label='target value')
-        with dpg.table(tag='recipe_weights', header_row=True):
-            dpg.add_table_column(label='ingredient')
-            dpg.add_table_column(label='weight')
-    result_values_table(target, calculation_data, final_weights)
-    weights_table(calculation_data, final_weights)
-
-def result_values_table(target, calculation_data, final_weights):
+def draw_recipe_nutri_results(target, calculation_data, final_weights):
     columns = db.calculation_columns.split(',')
     columns.append('calcium')
     final_target = calculation_data[columns].mul(final_weights, axis=0).sum()
@@ -121,13 +105,35 @@ def result_values_table(target, calculation_data, final_weights):
             color = (251, 73, 52) if target[nutrient].squeeze() <= final_target[nutrient] else (184, 187, 38)
             dpg.configure_item(final_target_text, color=color)
 
-
-def weights_table(calculation_data, final_weights):
+def draw_recipe_weights(calculation_data, final_weights):
     weights = final_weights * 100
     for ingredient, weight in zip(calculation_data['food'], weights):
         with dpg.table_row(parent='recipe_weights'):
             dpg.add_text(ingredient)
             dpg.add_text(f'{weight:.2f}g')
+
+def calculate_recipe(target, calculation_data) -> np.ndarray:
+    nutrition_matrix = calculation_data[db.calculation_columns.split(',')].to_numpy().T
+    bounds = calculation_data[['minimum', 'maximum']].to_numpy() / 100
+    initial_weights = calculation_data[['minimum', 'starting_amount']].max(axis=1) / 100
+    target = target.to_numpy()[0]
+    loss_function = lambda w: np.linalg.norm(target - np.dot(nutrition_matrix, w)) ** 2
+    res = minimize(loss_function, initial_weights, bounds=bounds)
+    return res.x
+
+def update_recipe_results():
+    if not app_state['target'] or not app_state['recipe']:
+        dpg.hide_item('calculation_results')
+        clear_calculation_results()
+        return
+    target, calculation_data = db.calculation_data(app_state['target'], app_state['recipe'])
+    if calculation_data.empty:
+        return
+    final_weights = calculate_recipe(target, calculation_data)
+    clear_calculation_results()
+    draw_recipe_nutri_results(target, calculation_data, final_weights)
+    draw_recipe_weights(calculation_data, final_weights)
+    dpg.show_item('calculation_results')
 
 # nutritional table
 def update_nutrition_table():
