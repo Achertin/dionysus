@@ -218,7 +218,7 @@ def rename_recipe_confirm(new_name, popup_id):
     update_recipe_calculator()
     dpg.delete_item(popup_id)
 
-def on_delete_recipe(sende, app_data, user_data):
+def on_delete_recipe(sender, app_data, user_data):
     with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
         if not app_state['target']:
             dpg.add_text('No source target selected!')    
@@ -265,6 +265,37 @@ def add_recipe_confirm(new_name, popup_id):
     dpg.delete_item(popup_id)
 
 # nutritional table
+def draw_nutri_table():
+    nutritional_data = db.nutritional_data()
+    for row in nutritional_data:
+        draw_nutri_table_row(row)
+
+def draw_nutri_table_row(row):
+    with dpg.table_row(filter_key=row['food'], parent='nutritional_data_table') as row_id:
+        for key in row.keys():
+            if key == 'id':
+                continue
+            elif key == 'food':
+                draw_food_cell(row[key], row['id'], row_id)
+            else:
+                dpg.add_text(row[key])
+
+
+def on_remove_food(sender, app_data, user_data):
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        dpg.add_text(f'Are you sure you want to remove {user_data['food']} from the table?')
+        with dpg.group(horizontal=True):
+            dpg.add_button(label='Remove', )
+            dpg.add_button(label='Cancel', callback=lambda s, a, u: dpg.delete_item(popup_id))
+
+def on_remove_food_confirm(food_id, popup_id):
+    pass
+
+def draw_food_cell(food, food_id, parent_id):
+    with dpg.group(horizontal=True, parent=parent_id):
+        dpg.add_button(label='X', user_data={'food': food, 'food_id': food_id})
+        dpg.add_text(food)
+
 def update_nutrition_table():
     try:
         scroll_x = dpg.get_x_scroll('nutritional_table')
