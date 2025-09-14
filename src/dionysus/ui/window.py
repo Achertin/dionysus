@@ -14,10 +14,10 @@ def show_dionysus():
                 dpg.add_text('Recipe:')
                 dpg.add_combo(fit_width=True, tag='recipe_combo', callback=ds.on_recipe_change)
             with dpg.group(horizontal=True):
-                dpg.add_button(label='Add recipe')
-                dpg.add_button(label='Rename recipe')
+                dpg.add_button(label='Add recipe', callback=ds.on_add_recipe)
+                dpg.add_button(label='Rename recipe', callback=ds.on_rename_recipe)
                 dpg.add_button(label='Copy recipe', callback=ds.on_copy_recipe)
-                dpg.add_button(label='Delete recipe')
+                dpg.add_button(label='Delete recipe', callback=ds.on_delete_recipe)
 
         dpg.add_separator()
         with dpg.group(tag='recipe_bounds'):

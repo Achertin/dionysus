@@ -50,6 +50,9 @@ def update_recipe_calculator():
 
 def on_target_change(sender, app_data, user_data):
     app_state['target'] = app_data
+    if app_state['recipe'] not in db.recipes_by_target(app_state['target']):
+        app_state['recipe'] = None
+        dpg.set_value('recipe_combo', '')
     update_recipe_calculator()
 
 def on_recipe_change(sender, app_data, user_data):
@@ -61,9 +64,6 @@ def update_target_list():
 
 def update_recipe_list():
     recipes = db.recipes_by_target(app_state['target'])
-    if app_state['recipe'] not in recipes:
-        app_state['recipe'] = None
-        dpg.set_value('recipe_combo', '')
     dpg.configure_item('recipe_combo', items=recipes)
 
 def on_bound_change(sender, app_data, user_data):
@@ -105,6 +105,7 @@ def draw_recipe_nutri_results(target, calculation_data, final_weights):
         if nutrient == 'saturated_fatty_acids':
             color = (251, 73, 52) if target[nutrient].squeeze() <= final_target[nutrient] else (184, 187, 38)
             dpg.configure_item(final_target_text, color=color)
+    dpg.show_item('recipe_nutri_values')
 
 def draw_recipe_weights(calculation_data, final_weights):
     weights = final_weights * 100
@@ -112,6 +113,7 @@ def draw_recipe_weights(calculation_data, final_weights):
         with dpg.table_row(parent='recipe_weights'):
             dpg.add_text(ingredient)
             dpg.add_text(f'{weight:.2f}g')
+    dpg.show_item('recipe_weights')
 
 def calculate_recipe(target, calculation_data) -> np.ndarray:
     nutrition_matrix = calculation_data[db.calculation_columns.split(',')].to_numpy().T
@@ -129,6 +131,8 @@ def update_recipe_results():
         return
     target, calculation_data = db.calculation_data(app_state['target'], app_state['recipe'])
     if calculation_data.empty:
+        dpg.hide_item('recipe_nutri_values')
+        dpg.hide_item('recipe_weights')
         return
     final_weights = calculate_recipe(target, calculation_data)
     clear_calculation_results()
@@ -195,16 +199,70 @@ def on_rename_recipe(sende, app_data, user_data):
         else:
             with dpg.group(horizontal=True):
                 dpg.add_text('New name:')
-                dpg.add_input_text(default_value=app_state['recipe'])
+                new_name = dpg.add_input_text(default_value=app_state['recipe'], callback=lambda s, a, u: dpg.set_item_user_data(confirm_rename, a))
             with dpg.group(horizontal=True):
-                dpg.add_button(label='Rename')
+                confirm_rename = dpg.add_button(label='Rename', user_data=dpg.get_value(new_name), callback=lambda s, a, u: rename_recipe_confirm(u, popup_id))
                 dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
 
-def on_delete_recipe(sende, app_data, user_data):
-    pass
+def rename_recipe_confirm(new_name, popup_id):
+    if not app_state['target'] or not app_state['recipe']:
+        dpg.add_text('Make sure that a target and a recipe are selected', color=(251, 73, 52), parent=popup_id)
+        return
+    if new_name in db.recipes_by_target(app_state['target']):
+        dpg.add_text('That recipe already exists', color=(251, 73, 52), parent=popup_id)
+        return
+    db.rename_recipe(app_state['target'], app_state['recipe'], new_name)
+    app_state['recipe'] = new_name
+    dpg.set_value('target_combo', app_state['target'])
+    dpg.set_value('recipe_combo', app_state['recipe'])
+    update_recipe_calculator()
+    dpg.delete_item(popup_id)
 
-def on_add_recipe(sende, app_data, user_data):
-    pass
+def on_delete_recipe(sende, app_data, user_data):
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        if not app_state['target']:
+            dpg.add_text('No source target selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        elif not app_state['recipe']:
+            dpg.add_text('No source recipe selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        else:
+            dpg.add_text('Are you sure you want to delete the recipe?')
+            with dpg.group(horizontal=True):
+                dpg.add_button(label='Delete', user_data=popup_id, callback=delete_recipe_confirm)
+                dpg.add_button(label='Cancel', callback=lambda s, a, u: dpg.delete_item(popup_id))
+
+def delete_recipe_confirm(sender, app_data, user_data):
+    db.delete_recipe(app_state['target'], app_state['recipe'])
+    app_state['recipe'] = None
+    dpg.set_value('recipe_combo', '')
+    update_recipe_calculator()
+    dpg.delete_item(user_data)
+
+def on_add_recipe(sender, app_data, user_data):
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        if not app_state['target']:
+            dpg.add_text('No source target selected!')    
+            dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+        else:
+            with dpg.group(horizontal=True):
+                dpg.add_text('New recipe name:')
+                dpg.add_input_text(hint='Type new recipe name here...', callback=lambda s, a, u: dpg.set_item_user_data(add_button, a))
+            with dpg.group(horizontal=True):
+                add_button = dpg.add_button(label='Add', user_data='', callback=lambda s, a, u: add_recipe_confirm(u, popup_id))
+                dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
+
+def add_recipe_confirm(new_name, popup_id):
+    if not new_name:
+        dpg.add_text('New name missing', color=(251, 73, 52), parent=popup_id)
+        return
+    if new_name in db.recipes_by_target(app_state['target']):
+        dpg.add_text('That recipe already exists', color=(251, 73, 52), parent=popup_id)
+        return
+    app_state['recipe'] = new_name
+    dpg.set_value('recipe_combo', app_state['recipe'])
+    update_recipe_calculator()
+    dpg.delete_item(popup_id)
 
 # nutritional table
 def update_nutrition_table():

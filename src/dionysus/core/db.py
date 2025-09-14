@@ -153,6 +153,25 @@ class Database:
             self.conn.execute(query, (new_target, new_name, recipe, target))
             self.conn.commit()
 
+    def rename_recipe(self, target, recipe, new_name):
+        query = f'''
+           UPDATE recipes
+           SET recipe = ?
+           WHERE recipe = ? AND target_id = (SELECT id FROM targets WHERE name = ?)
+        '''
+        with self.lock:
+            self.conn.execute(query, (new_name, recipe, target))
+            self.conn.commit()
+
+    def delete_recipe(self, target, recipe):
+        query = f'''
+            DELETE FROM recipes
+            WHERE recipe = ? AND target_id = (SELECT id FROM targets WHERE name = ?)
+        '''
+        with self.lock:
+            self.conn.execute(query, (recipe, target))
+            self.conn.commit()
+
     def close(self):
         self.conn.close()
 
