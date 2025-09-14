@@ -83,6 +83,11 @@ class Database:
             rows = self.conn.execute('SELECT food FROM nutritional_data ORDER BY food COLLATE NOCASE').fetchall()
             return [row['food'] for row in rows]
 
+    def nutritional_data_columns(self) -> list[str]:
+        with self.lock:
+            columns = self.conn.execute('PRAGRAM table_info(nutritional_data)')
+            return [col[1] for col in columns]
+
     def update_nutritional_data(self, id, column, value):
         query = f'''
             UPDATE nutritional_data

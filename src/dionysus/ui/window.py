@@ -41,5 +41,11 @@ def show_dionysus():
             with dpg.group(horizontal=True):
                 dpg.add_text('Filter food:')
                 dpg.add_input_text(width=500, user_data='nutritional_table', tag='nutri_filter')
+            with dpg.table(header_row=True, row_background=True, borders_innerH=True, borders_innerV=True, tag='nutritional_data_table', resizable=True, show=True):
+                for column in db.nutritional_data_columns():
+                    if column == 'id':
+                        continue
+                    dpg.add_table_column(label=column)
+
             with dpg.group(tag='nutritional_data'):
                 pass
