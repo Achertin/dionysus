@@ -3,3 +3,7 @@ __pycache__
 food.db
 __pycache__
 demo_gui.py
+main.spec
+Dionysus.spec
+build
+dist

@@ -1,10 +1,13 @@
 import dearpygui.dearpygui as dpg
 import dionysus.ui.callbacks as ds
 from dionysus.core.state import db
+from dionysus.core.state import app_data_path
+import os
+from pathlib import Path
 
 def show_dionysus():
     with dpg.font_registry():
-        default_font = dpg.add_font('../assets/JetBrainsMonoNL-Regular.ttf', 20)
+        default_font = dpg.add_font(os.path.expandvars(app_data_path + '/assets/JetBrainsMonoNL-Regular.ttf'), 20)
     with dpg.window(tag='main'):
         dpg.bind_font(default_font)
         with dpg.group(tag='recipe_calculator'):
