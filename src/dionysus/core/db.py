@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from pathlib import Path
 import threading
 import pandas as pd
@@ -6,9 +7,9 @@ import numpy as np
 
 
 class Database:
-    def __init__(self, db_path='./data/app.db'):
+    def __init__(self, db_path='$HOME/.local/share/dionysus/food.db'):
         self.lock = threading.Lock()
-        self.db_path = Path(db_path)
+        self.db_path = Path(os.path.expandvars(db_path))
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.calculation_columns = 'energy,protein,fatty_acids,saturated_fatty_acids,carbohydrates,fibre'
@@ -82,6 +83,11 @@ class Database:
             rows = self.conn.execute('SELECT food FROM nutritional_data ORDER BY food COLLATE NOCASE').fetchall()
             return [row['food'] for row in rows]
 
+    def nutritional_data_columns(self) -> list[str]:
+        with self.lock:
+            columns = self.conn.execute('PRAGMA table_info(nutritional_data)')
+            return [col[1] for col in columns]
+
     def update_nutritional_data(self, id, column, value):
         query = f'''
             UPDATE nutritional_data
@@ -150,6 +156,25 @@ class Database:
         '''
         with self.lock:
             self.conn.execute(query, (new_target, new_name, recipe, target))
+            self.conn.commit()
+
+    def rename_recipe(self, target, recipe, new_name):
+        query = f'''
+           UPDATE recipes
+           SET recipe = ?
+           WHERE recipe = ? AND target_id = (SELECT id FROM targets WHERE name = ?)
+        '''
+        with self.lock:
+            self.conn.execute(query, (new_name, recipe, target))
+            self.conn.commit()
+
+    def delete_recipe(self, target, recipe):
+        query = f'''
+            DELETE FROM recipes
+            WHERE recipe = ? AND target_id = (SELECT id FROM targets WHERE name = ?)
+        '''
+        with self.lock:
+            self.conn.execute(query, (recipe, target))
             self.conn.commit()
 
     def close(self):
