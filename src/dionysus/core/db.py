@@ -147,12 +147,12 @@ class Database:
 
             return (target, calculation_data)
     
-    def copy_recipe(self, recipe, target, new_target, new_name):
+    def copy_recipe(self, target, recipe, new_target, new_name):
         query = f'''
             INSERT INTO recipes (target_id, recipe, food_id, minimum, maximum, starting_amount)
             SELECT (SELECT id FROM targets WHERE name = ?), ?, food_id, minimum, maximum, starting_amount
             FROM recipes
-            WHERE recipe = ? AND (SELECT id FROM targets WHERE name = ?) 
+            WHERE recipe = ? AND target_id = (SELECT id FROM targets WHERE name = ?) 
         '''
         with self.lock:
             self.conn.execute(query, (new_target, new_name, recipe, target))

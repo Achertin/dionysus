@@ -186,7 +186,7 @@ def copy_recipe_confirm(copy_data, popup_id):
     if copy_data['new_name'] in db.recipes_by_target(copy_data['new_target']):
         dpg.add_text('Recipe already exists for that target', color=(251, 73, 52), parent=popup_id)
         return
-    db.copy_recipe(app_state['recipe'], app_state['target'], copy_data['new_target'], copy_data['new_name'])
+    db.copy_recipe(app_state['target'], app_state['recipe'], copy_data['new_target'], copy_data['new_name'])
     app_state['target'] = copy_data['new_target']
     app_state['recipe'] = copy_data['new_name']
     dpg.set_value('target_combo', app_state['target'])
@@ -347,3 +347,5 @@ def on_add_food_confirm(new_food, popup_id):
     draw_nutri_table()
     update_recipe_calculator()
     dpg.delete_item(popup_id)
+
+# miscellaneous callbacks
