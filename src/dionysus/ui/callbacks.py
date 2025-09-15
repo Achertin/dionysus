@@ -96,6 +96,9 @@ def clear_calculation_results():
 def draw_recipe_nutri_results(target, calculation_data, final_weights):
     columns = db.calculation_columns.split(',')
     columns.append('calcium')
+    columns.append('iodine')
+    columns.append('selenium')
+    columns.append('phosphorus')
     final_target = calculation_data[columns].mul(final_weights, axis=0).sum()
     for nutrient in columns:
         with dpg.table_row(parent='recipe_nutri_values'):
