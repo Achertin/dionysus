@@ -67,7 +67,10 @@ def update_recipe_list():
     dpg.configure_item('recipe_combo', items=recipes)
 
 def on_bound_change(sender, app_data, user_data):
-    db.update_recipe_bounds(app_state['recipe'], app_state['target'], user_data['food'], user_data['column'], None if app_data == '' else app_data)
+    try:
+        db.update_recipe_bounds(app_state['recipe'], app_state['target'], user_data['food'], user_data['column'], None if app_data == '' else app_data)
+    except:
+        pass
     update_recipe_calculator()
 
 def on_add_ingredient(sender, app_data, user_data):
@@ -140,7 +143,7 @@ def update_recipe_results():
     draw_recipe_weights(calculation_data, final_weights)
     dpg.show_item('calculation_results')
 
-def center_recipe_popup(popup_id):
+def center_popup(popup_id):
     main_widht = dpg.get_viewport_width() or 0
     main_height = dpg.get_viewport_height() or 0
     popup_width = dpg.get_item_width(popup_id) or 0
@@ -171,7 +174,7 @@ def on_copy_recipe(sender, app_data, user_data):
             with dpg.group(horizontal=True):
                 dpg.add_button(label='Copy', callback=lambda s, a, u: copy_recipe_confirm(copy_data, popup_id))
                 dpg.add_button(label='Close', callback=lambda s, a, u: dpg.delete_item(popup_id))
-    dpg.set_frame_callback(1, lambda: center_recipe_popup)
+    dpg.set_frame_callback(1, lambda: center_popup)
 
 def copy_recipe_confirm(copy_data, popup_id):
     if not copy_data['new_target'] or not copy_data['new_name']:
@@ -267,6 +270,7 @@ def add_recipe_confirm(new_name, popup_id):
 # nutritional table
 def draw_nutri_table():
     nutritional_data = db.nutritional_data()
+    clear_nutri_table()
     for row in nutritional_data:
         draw_nutri_table_row(row)
 
@@ -278,88 +282,65 @@ def draw_nutri_table_row(row):
             elif key == 'food':
                 draw_food_cell(row[key], row['id'], row_id)
             else:
-                dpg.add_text(row[key])
-
+                dpg.add_input_text(default_value=row[key], on_enter=True, auto_select_all=True, decimal=True, user_data={'food_id': row['id'], 'column': key}, callback=on_change_nutri_value, width=100)
 
 def on_remove_food(sender, app_data, user_data):
     with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
         dpg.add_text(f'Are you sure you want to remove {user_data['food']} from the table?')
         with dpg.group(horizontal=True):
-            dpg.add_button(label='Remove', )
+            dpg.add_button(label='Remove', callback=lambda s, a, u: on_remove_food_confirm(user_data['food_id'], popup_id))
             dpg.add_button(label='Cancel', callback=lambda s, a, u: dpg.delete_item(popup_id))
 
 def on_remove_food_confirm(food_id, popup_id):
-    pass
+    db.remove_food_from_nutritional_data(food_id)
+    update_recipe_calculator()
+    draw_nutri_table()
+    dpg.delete_item(popup_id)
 
 def draw_food_cell(food, food_id, parent_id):
     with dpg.group(horizontal=True, parent=parent_id):
-        dpg.add_button(label='X', user_data={'food': food, 'food_id': food_id})
-        dpg.add_text(food)
+        dpg.add_button(label='X', user_data={'food': food, 'food_id': food_id}, callback=on_remove_food)
+        dpg.add_input_text(default_value=food, on_enter=True, auto_select_all=True, user_data={'food_id': food_id, 'column': 'food'}, callback=on_change_nutri_value, width=300)
 
-def update_nutrition_table():
-    try:
-        scroll_x = dpg.get_x_scroll('nutritional_table')
-        scroll_y = dpg.get_y_scroll('nutritional_table')
-    except:
-        scroll_x = 0
-        scroll_y = 0
-    dpg.delete_item('nutritional_data', children_only=True)
-    rows = db.nutritional_data()
-    nutritional_table(rows)
-    with dpg.table_row(parent='nutritional_table'):
-        with dpg.group(horizontal=True,):
-            dpg.add_input_text(hint='Add new food', user_data='food', on_enter=True, width=300, callback=add_food_to_nutritional_table)
-
-    dpg.set_x_scroll('nutritional_table', scroll_x)
-    dpg.set_y_scroll('nutritional_table', scroll_y)
-
-def nutritional_table(nutritional_rows):
-    with dpg.table(header_row=True, row_background=True, borders_innerH=True, borders_innerV=True,
-                   scrollX=True, resizable=True, hideable=True, scrollY=True, height=500, 
-                   freeze_rows=1, parent='nutritional_data', tag='nutritional_table'):
-        for header in nutritional_rows[0].keys():
-            if header == 'id':
-                continue
-            dpg.add_table_column(label=header, width_fixed=True)
-        for row in nutritional_rows:
-            with dpg.table_row(filter_key=row['food']):
-                for key in row.keys():
-                    if key == 'id':
-                        continue
-                    if key == 'food':
-                        with dpg.group(horizontal=True):
-                            dpg.add_button(label='X', user_data=row['id'])
-                            with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left) as remove_food:
-                                dpg.add_text(f'Are you sure you want to remove {row['food']} from the table?')
-                                with dpg.group(horizontal=True):
-                                    dpg.add_button(label='Yes', user_data={'food_id': row['id'], 'popup_id': remove_food}, callback=delete_food_from_nutritional_data)
-                                    dpg.add_button(label='Cancel', user_data=remove_food, callback=lambda s, a, u: dpg.configure_item(u, show=False))
-                            dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
-                                               on_enter=True, width=250, callback=update_nutrition_value)
-                        continue
-                    dpg.add_input_text(default_value=row[key], user_data={'id': row['id'], 'column': key}, 
-                                       on_enter=True, width=100, decimal=True, callback=update_nutrition_value,
-                                       auto_select_all=True)
-
-def update_nutrition_value(sender, app_data, user_data):
-    if app_data == '':
-        update_nutrition_table()
+def clear_nutri_table():
+    rows = dpg.get_item_children('nutritional_data_table', slot=1)
+    if not rows:
         return
-    db.update_nutritional_data(user_data['id'], user_data['column'], app_data)
-    update_nutrition_table()
-    filter_nutri_table('nutri_filter', None, 'nutritional_table')
+    for row in rows:
+        dpg.delete_item(row)
 
-def add_food_to_nutritional_table(sender, app_data, user_data):
-    if app_data == '':
-        return
-    db.add_food_to_nutritional_data(app_data)
-    update_nutrition_table()
-    dpg.configure_item('add_ingredient_to_recipe', items=db.food_list())
-
-def delete_food_from_nutritional_data(sender, app_data, user_data):
-    db.remove_food_from_nutritional_data(user_data['food_id'])
-    update_nutrition_table()
-    dpg.configure_item(user_data['popup_id'], show=False)
-
-def filter_nutri_table(sender, app_data, user_data):
+def on_filter_nutri_table(sender, app_data, user_data):
     dpg.set_value(user_data, dpg.get_value(sender))
+
+def on_change_nutri_value(sender, app_data, user_data):
+    if app_data == '':
+        draw_nutri_table()
+        return
+    try:
+        db.update_nutritional_data(user_data['food_id'], user_data['column'], app_data)
+    except:
+        pass
+    update_recipe_calculator()
+    draw_nutri_table()
+
+def on_add_food_to_nutri_table(sender, app_data, user_data):
+    with dpg.window(modal=True, popup=True, no_move=True, autosize=True, no_close=True) as popup_id:
+        with dpg.group(horizontal=True):
+            dpg.add_text('New food name:')
+            dpg.add_input_text(callback=lambda s, a, u: dpg.set_item_user_data(confirm_button, a))
+        with dpg.group(horizontal=True):
+            confirm_button = dpg.add_button(label='Add food', user_data='', callback=lambda s, a, u: on_add_food_confirm(u, popup_id))
+            dpg.add_button(label='Cancel', callback=lambda s, a, u: dpg.delete_item(popup_id))
+
+def on_add_food_confirm(new_food, popup_id):
+    if new_food == '':
+        dpg.add_text('Food name can not be blank', color=(251, 73, 52), parent=popup_id)
+        return
+    if new_food in db.food_list():
+        dpg.add_text('Food already exists in table', color=(251, 73, 52), parent=popup_id)
+        return
+
+    db.add_food_to_nutritional_data(new_food)
+    draw_nutri_table()
+    update_recipe_calculator()
+    dpg.delete_item(popup_id)

@@ -40,7 +40,8 @@ def show_dionysus():
         with dpg.collapsing_header(label='Nutritional Data'):
             with dpg.group(horizontal=True):
                 dpg.add_text('Filter food:')
-                dpg.add_input_text(width=500, user_data='nutritional_data_table', tag='nutri_filter')
+                dpg.add_input_text(width=300, user_data='nutritional_data_table', tag='nutri_filter', callback=ds.on_filter_nutri_table)
+                dpg.add_button(label='Add food', callback=ds.on_add_food_to_nutri_table)
             with dpg.table(header_row=True, row_background=True, borders_innerH=True, borders_innerV=True, scrollX=True, resizable=True, hideable=True, scrollY=True, height=600, freeze_rows=1, tag='nutritional_data_table'):
                 for column in db.nutritional_data_columns():
                     if column == 'id':
