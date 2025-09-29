@@ -33,7 +33,7 @@ def show_dionysus():
 
         dpg.add_separator()
         with dpg.group(tag='calculation_results', show=False):
-            with dpg.table(tag='recipe_nutri_values', header_row=True):
+            with dpg.table(tag='recipe_nutri_values', header_row=True, row_background=True):
                 dpg.add_table_column(label='nutrient')
                 dpg.add_table_column(label='final vlaue')
                 dpg.add_table_column(label='target value')

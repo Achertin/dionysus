@@ -94,11 +94,12 @@ def clear_calculation_results():
             dpg.delete_item(row)
 
 def draw_recipe_nutri_results(target, calculation_data, final_weights):
+    micronutrients = ['calcium', 'iodine', 'selenium', 'phosphorus',
+                      'isoleu', 'leu', 'lys', 'meth', 'phe', 'threo',
+                      'tryp', 'val', 'hist']
     columns = db.calculation_columns.split(',')
-    columns.append('calcium')
-    columns.append('iodine')
-    columns.append('selenium')
-    columns.append('phosphorus')
+    for nutrient in micronutrients:
+        columns.append(nutrient)
     final_target = calculation_data[columns].mul(final_weights, axis=0).sum()
     for nutrient in columns:
         with dpg.table_row(parent='recipe_nutri_values'):
