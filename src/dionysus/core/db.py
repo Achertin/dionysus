@@ -12,7 +12,7 @@ class Database:
         self.db_path = Path(os.path.expandvars(db_path))
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
-        self.calculation_columns = 'energy,protein,fatty_acids,saturated_fatty_acids,carbohydrates,fibre'
+        self.calculation_columns = 'protein,fatty_acids,saturated_fatty_acids,carbohydrates,fibre'
 
     def target_names(self) -> list[str]:
         with self.lock:
