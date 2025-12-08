@@ -95,6 +95,7 @@ def clear_calculation_results():
 
 def draw_recipe_nutri_results(target, calculation_data, final_weights):
     micronutrients = ['energy', 'calcium', 'iodine', 'selenium', 'phosphorus',
+                      'folic_acid', 'natrium',
                       'isoleu', 'leu', 'lys', 'meth', 'phe', 'threo',
                       'tryp', 'val', 'hist']
     columns = db.calculation_columns.split(',')
