@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 from .calculator_window import build_calculator
+from .database_window import build_food_database_window
 
 def start_main_window():
     dpg.create_context()
@@ -11,7 +12,8 @@ def start_main_window():
     ):
         with dpg.tab_bar():
             build_calculator()
-            database = dpg.add_tab(label="Database")
+            with dpg.tab(label="Food database"):
+                build_food_database_window()
             targets = dpg.add_tab(label="Targets")
             users = dpg.add_tab(label="Users")
 
