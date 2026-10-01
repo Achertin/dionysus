@@ -40,3 +40,18 @@ def get_food(search_text):
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+def get_food_details(food_id):
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+
+        row = conn.execute(
+            """
+            SELECT *
+            FROM nutritional_data
+            WHERE id = ?
+            """,
+            (food_id,)
+        ).fetchone()
+
+    return row
