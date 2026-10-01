@@ -16,8 +16,6 @@ def init_db():
         conn.executescript(schema)
 
 def get_food(search_text):
-    if not search_text:
-        return []
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 
@@ -41,7 +39,7 @@ def get_food(search_text):
 
     return [dict(row) for row in rows]
 
-def get_food_details(food_id):
+def get_food_detail(food_id):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 

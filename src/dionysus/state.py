@@ -1,5 +1,5 @@
 from dataclasses import dataclass
 
 @dataclass
-class AppState:
-    pass
+class DatabaseState:
+    selected_food_id: int | None = None

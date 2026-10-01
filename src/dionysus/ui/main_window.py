@@ -10,6 +10,7 @@ def start_main_window():
         tag="main_window",
         no_title_bar=True,
     ):
+        dpg.set_primary_window("main_window", value=True)
         with dpg.tab_bar():
             build_calculator()
             with dpg.tab(label="Food database"):
@@ -17,7 +18,6 @@ def start_main_window():
             targets = dpg.add_tab(label="Targets")
             users = dpg.add_tab(label="Users")
 
-    dpg.set_primary_window("main_window", value=True)
 
     dpg.setup_dearpygui()
     dpg.show_viewport()
