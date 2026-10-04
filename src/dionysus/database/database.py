@@ -74,4 +74,11 @@ def update_food_detail(food_id, new_data):
     values = tuple(new_data.values()) + (food_id,)
     with get_connection() as conn:
         conn.execute(query, values)
-        
+
+
+def delete_food(food_id):
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM nutritional_data WHERE id = ?",
+            (food_id,)
+        )

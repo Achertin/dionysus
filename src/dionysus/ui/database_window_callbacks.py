@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 from dionysus.database.database import (
+    delete_food,
     get_food,
     get_food_detail,
     update_food_detail
@@ -59,6 +60,10 @@ def populate_food_detail(food_id):
         "edit_detail_name", 
         f"Editing: {food_details["name"]}"
     )
+    dpg.set_value(
+        "delete_food_warning",
+        f"Are you sure you want to delete {food_details["name"]} from the database?"
+    )
     
     for section in FOOD_METADATA:
         for column, metadata in FOOD_METADATA[section].items():
@@ -100,7 +105,6 @@ def get_new_edit_data():
     return new_data
 
 
-
 def on_save_edit_detail(sender, app_data, user_data):
     state: DatabaseState = user_data
     new_data = get_new_edit_data()
@@ -118,3 +122,15 @@ def clear_table():
         return
     for row in rows:
         dpg.delete_item(row)
+
+
+def on_delete_food(sender, app_data, user_data):
+    state: DatabaseState = user_data
+    delete_food(state.selected_food_id)
+    state.selected_food_id = None
+    state.search_filter = ""
+
+    clear_food_detail()
+    clear_table()
+    populate_table(state)
+    dpg.configure_item("delete_food_popup", show=False)

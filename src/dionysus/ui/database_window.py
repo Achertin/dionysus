@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 from .database_window_callbacks import (
     on_close_food_detail,
+    on_delete_food,
     on_save_edit_detail,
     on_search_food, 
     populate_table
@@ -39,6 +40,7 @@ def build_food_table(state: DatabaseState):
             dpg.add_table_column(label=column_name, width_fixed=True)
         populate_table(state)
 
+
 def build_food_detail(state: DatabaseState):
     with dpg.group(horizontal=True):
         dpg.add_text(
@@ -48,6 +50,7 @@ def build_food_detail(state: DatabaseState):
         dpg.add_button(label="Edit", tag="details_edit_button")
         build_edit_modal(state)
         dpg.add_button(label="Delete", tag="details_delete_button")
+        build_delete_modal(state)
 
     for section in FOOD_METADATA:
         dpg.add_text(section)
@@ -80,4 +83,15 @@ def build_edit_modal(state: DatabaseState):
         with dpg.group(horizontal=True):
             dpg.add_button(label="Save", callback=on_save_edit_detail, user_data=state)
             dpg.add_button(label="Cancel", callback=on_close_food_detail, user_data=state)
+
+
+def build_delete_modal(state: DatabaseState):
+    with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left, tag="delete_food_popup"):
+        dpg.add_text(
+            "",
+            tag="delete_food_warning"
+        )
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Delete", user_data=state, callback=on_delete_food)
+            dpg.add_button(label="Cancel", callback=lambda: dpg.configure_item("delete_food_popup", show=False))
 
