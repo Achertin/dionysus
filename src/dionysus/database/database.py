@@ -4,16 +4,19 @@ from pathlib import Path
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
+
 def get_connection():
     conn =  sqlite3.connect(DATABASE_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
 
 def init_db():
     schema = SCHEMA_PATH.read_text()
 
     with get_connection() as conn:
         conn.executescript(schema)
+
 
 def get_food(search_text):
     with get_connection() as conn:
@@ -39,6 +42,7 @@ def get_food(search_text):
 
     return [dict(row) for row in rows]
 
+
 def get_food_detail(food_id):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
@@ -53,3 +57,21 @@ def get_food_detail(food_id):
         ).fetchone()
 
     return row
+
+
+def update_food_detail(food_id, new_data):
+    assignments = ", ".join(
+        f"{column} = ? "
+        for column in new_data
+    )
+
+    query = f"""
+        UPDATE nutritional_data
+        SET {assignments}
+        WHERE id = ?
+    """
+
+    values = tuple(new_data.values()) + (food_id,)
+    with get_connection() as conn:
+        conn.execute(query, values)
+        
