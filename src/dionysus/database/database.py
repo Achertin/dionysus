@@ -59,6 +59,21 @@ def get_food_detail(food_id):
     return row
 
 
+def add_new_food(food_data):
+    columns = ", ".join(food_data.keys())
+    placeholders = ", ".join("?" for _ in food_data)
+
+    query = f"""
+        INSERT INTO nutritional_data ({columns})
+        VALUES ({placeholders})
+    """
+
+    with get_connection() as conn:
+        cursor = conn.execute(query, tuple(food_data.values()))
+
+    return cursor.lastrowid
+
+
 def update_food_detail(food_id, new_data):
     assignments = ", ".join(
         f"{column} = ? "

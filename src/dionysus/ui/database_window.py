@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 from .database_window_callbacks import (
-    on_close_food_detail,
+    on_add_food,
+    on_cancel_edit_detail,
     on_delete_food,
     on_save_edit_detail,
     on_search_food, 
@@ -18,6 +19,7 @@ def build_food_database_window():
                 dpg.add_text("Search food:")
                 dpg.add_input_text(width=300, callback=on_search_food, user_data=state)
                 dpg.add_button(label="Add food")
+                build_add_food_modal(state)
             build_food_table(state)
         with dpg.child_window(width=-1):
             build_food_detail(state)
@@ -82,7 +84,7 @@ def build_edit_modal(state: DatabaseState):
 
         with dpg.group(horizontal=True):
             dpg.add_button(label="Save", callback=on_save_edit_detail, user_data=state)
-            dpg.add_button(label="Cancel", callback=on_close_food_detail, user_data=state)
+            dpg.add_button(label="Cancel", callback=on_cancel_edit_detail, user_data=state)
 
 
 def build_delete_modal(state: DatabaseState):
@@ -95,3 +97,18 @@ def build_delete_modal(state: DatabaseState):
             dpg.add_button(label="Delete", user_data=state, callback=on_delete_food)
             dpg.add_button(label="Cancel", callback=lambda: dpg.configure_item("delete_food_popup", show=False))
 
+
+def build_add_food_modal(state: DatabaseState):
+    with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left, tag="add_food_popup"):
+        dpg.add_text("Please enter details below:")
+        with dpg.group(horizontal=True):
+            dpg.add_text("Name")
+            dpg.add_input_text(tag=f"add_food_name_input")
+        for nutrient, metadata in FOOD_METADATA["Macronutrients"].items():
+            with dpg.group(horizontal=True):
+                dpg.add_text(metadata["label"])
+                dpg.add_input_float(tag=f"add_food_{nutrient}_input", step=0)
+                dpg.add_text(metadata["unit"])
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Add", user_data=state, callback=on_add_food)
+            dpg.add_button(label="Cancel", callback=lambda: dpg.configure_item("add_food_popup", show=False))

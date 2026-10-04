@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 from dionysus.database.database import (
+    add_new_food,
     delete_food,
     get_food,
     get_food_detail,
@@ -88,7 +89,7 @@ def on_display_food_detail(sender, app_data, user_data):
     populate_food_detail(food_id)
 
 
-def on_close_food_detail(sender, app_data, user_data):
+def on_cancel_edit_detail(sender, app_data, user_data):
     state: DatabaseState = user_data
     clear_food_detail()
     populate_food_detail(state.selected_food_id)
@@ -134,3 +135,31 @@ def on_delete_food(sender, app_data, user_data):
     clear_table()
     populate_table(state)
     dpg.configure_item("delete_food_popup", show=False)
+
+
+def on_add_food(sender, app_data, user_data):
+    state: DatabaseState = user_data
+    food_data = get_add_food_data()
+    food_id = add_new_food(food_data)
+    state.selected_food_id = food_id
+    state.search_filter = food_data["name"]
+    clear_table()
+    clear_food_detail()
+    populate_table(state)
+    populate_food_detail(food_id)
+    dpg.configure_item("add_food_popup", show=False)
+
+
+def get_add_food_data():
+    food_data = {
+        "name": dpg.get_value("add_food_name_input")
+    }
+    for column in FOOD_METADATA["Macronutrients"]:
+        food_data[column] = dpg.get_value(f"add_food_{column}_input")
+
+    return food_data
+
+
+
+def on_cancel_add_food(sender, app_data, user_data):
+    pass
