@@ -26,6 +26,14 @@ def populate_table(state: DatabaseState):
                 dpg.add_selectable(label=food[column], span_columns=True, user_data=(state, food["id"]), callback=on_display_food_detail)
 
 
+def clear_table():
+    rows = dpg.get_item_children("food_database_table", slot=1)
+    if not rows:
+        return
+    for row in rows:
+        dpg.delete_item(row)
+
+
 def clear_food_detail():
     dpg.set_value(
         "detail_name",
@@ -117,14 +125,6 @@ def on_save_edit_detail(sender, app_data, user_data):
     dpg.configure_item("edit_detail_popup", show=False)
 
 
-def clear_table():
-    rows = dpg.get_item_children("food_database_table", slot=1)
-    if not rows:
-        return
-    for row in rows:
-        dpg.delete_item(row)
-
-
 def on_delete_food(sender, app_data, user_data):
     state: DatabaseState = user_data
     delete_food(state.selected_food_id)
@@ -158,7 +158,6 @@ def get_add_food_data():
         food_data[column] = dpg.get_value(f"add_food_{column}_input")
 
     return food_data
-
 
 
 def on_cancel_add_food(sender, app_data, user_data):

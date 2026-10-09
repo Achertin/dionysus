@@ -97,3 +97,26 @@ def delete_food(food_id):
             "DELETE FROM nutritional_data WHERE id = ?",
             (food_id,)
         )
+
+
+def get_users(search_text):
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+
+        rows = conn.execute(
+            """
+            SELECT
+                id,
+                name,
+                age,
+                sex,
+                weight,
+                height
+            FROM users
+            WHERE name LIKE ?
+            ORDER BY name
+            """,
+            (f"%{search_text}%",)
+        ).fetchall()
+
+    return [dict(row) for row in rows]

@@ -14,14 +14,14 @@ from dionysus.state import DatabaseState
 def build_food_database_window():
     state = DatabaseState()
     with dpg.group(horizontal=True):
-        with dpg.child_window(width=900):
+        with dpg.child_window(width=900, tag="database_food_table"):
             with dpg.group(horizontal=True):
                 dpg.add_text("Search food:")
                 dpg.add_input_text(width=300, callback=on_search_food, user_data=state)
                 dpg.add_button(label="Add food")
                 build_add_food_modal(state)
             build_food_table(state)
-        with dpg.child_window(width=-1):
+        with dpg.child_window(width=-1, tag="database_food_detail"):
             build_food_detail(state)
 
 
