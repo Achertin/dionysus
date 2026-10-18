@@ -1,0 +1,28 @@
+[tool.basedpyright]
+venvPath = "."
+venv = ".venv"
+reportGeneralTypeIssues = "none"
+typeCheckingMode = "standard"
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle: basic style errors and warnings
+    "F",       # pyflakes: unused imports, undefined names, real bugs
+    "I",       # isort: consistent import ordering
+    "B",       # flake8-bugbear: common bug patterns (e.g. mutable default args)
+    "UP",      # pyupgrade: use modern Python syntax
+    "SIM",     # flake8-simplify: suggests simpler code
+    "N",       # pep8-naming: consistent naming
+    "C4",      # flake8-comprehensions: cleaner comprehensions
+    "RUF",     # Ruff's own useful rules
+]
+ignore = [
+    "E501",    # line too long; the formatter already handles this
+]
+
+[tool.ruff.format]
+quote-style = "double"

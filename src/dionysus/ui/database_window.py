@@ -1,14 +1,16 @@
 import dearpygui.dearpygui as dpg
+
+from dionysus.constants import FOOD_METADATA
+from dionysus.state import DatabaseState
+
 from .database_window_callbacks import (
     on_add_food,
     on_cancel_edit_detail,
     on_delete_food,
     on_save_edit_detail,
-    on_search_food, 
-    populate_table
+    on_search_food,
+    populate_table,
 )
-from dionysus.constants import FOOD_METADATA
-from dionysus.state import DatabaseState
 
 
 def build_food_database_window():
@@ -57,7 +59,7 @@ def build_food_detail(state: DatabaseState):
     for section in FOOD_METADATA:
         dpg.add_text(section)
         dpg.add_separator()
-        for nutrient in FOOD_METADATA[section].keys():
+        for nutrient in FOOD_METADATA[section]:
             dpg.add_text(
                 "",
                 tag=f"detail_{nutrient}"
@@ -103,7 +105,7 @@ def build_add_food_modal(state: DatabaseState):
         dpg.add_text("Please enter details below:")
         with dpg.group(horizontal=True):
             dpg.add_text("Name")
-            dpg.add_input_text(tag=f"add_food_name_input")
+            dpg.add_input_text(tag="add_food_name_input")
         for nutrient, metadata in FOOD_METADATA["Macronutrients"].items():
             with dpg.group(horizontal=True):
                 dpg.add_text(metadata["label"])

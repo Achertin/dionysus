@@ -1,6 +1,7 @@
 import sqlite3
-from dionysus.config import DATABASE_PATH
 from pathlib import Path
+
+from dionysus.config import DATABASE_PATH
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -86,7 +87,7 @@ def update_food_detail(food_id, new_data):
         WHERE id = ?
     """
 
-    values = tuple(new_data.values()) + (food_id,)
+    values = (*tuple(new_data.values()), food_id)
     with get_connection() as conn:
         conn.execute(query, values)
 

@@ -1,12 +1,13 @@
 import dearpygui.dearpygui as dpg
+
+from dionysus.constants import FOOD_METADATA
 from dionysus.database.database import (
     add_new_food,
     delete_food,
     get_food,
     get_food_detail,
-    update_food_detail
+    update_food_detail,
 )
-from dionysus.constants import FOOD_METADATA
 from dionysus.state import DatabaseState
 
 
@@ -19,7 +20,7 @@ def on_search_food(sender, app_data, user_data):
 
 def populate_table(state: DatabaseState):
     food_data = get_food(state.search_filter)
-    database_columns = ["name"] + [column for column in FOOD_METADATA["Macronutrients"]]
+    database_columns = ["name"] + list(FOOD_METADATA["Macronutrients"])
     for food in food_data:
         with dpg.table_row(parent="food_database_table"):
             for column in database_columns:
@@ -62,18 +63,18 @@ def clear_food_detail():
 def populate_food_detail(food_id):
     food_details = get_food_detail(food_id)
     dpg.set_value(
-        "detail_name", 
+        "detail_name",
         food_details["name"]
     )
     dpg.set_value(
-        "edit_detail_name", 
+        "edit_detail_name",
         f"Editing: {food_details["name"]}"
     )
     dpg.set_value(
         "delete_food_warning",
         f"Are you sure you want to delete {food_details["name"]} from the database?"
     )
-    
+
     for section in FOOD_METADATA:
         for column, metadata in FOOD_METADATA[section].items():
             dpg.set_value(
@@ -91,7 +92,7 @@ def populate_food_detail(food_id):
 
 
 def on_display_food_detail(sender, app_data, user_data):
-    state, food_id = user_data 
+    state, food_id = user_data
     state.selected_food_id = food_id
     clear_food_detail()
     populate_food_detail(food_id)
@@ -107,7 +108,7 @@ def on_cancel_edit_detail(sender, app_data, user_data):
 def get_new_edit_data():
     new_data = {}
     for section in FOOD_METADATA:
-        for column in FOOD_METADATA[section].keys():
+        for column in FOOD_METADATA[section]:
             new_value = dpg.get_value(f"edit_detail_{column}_input")
             new_data[column] = new_value
 

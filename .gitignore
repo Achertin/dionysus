@@ -7,3 +7,4 @@ main.spec
 Dionysus.spec
 build
 dist
+.venv

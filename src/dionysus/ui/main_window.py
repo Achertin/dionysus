@@ -1,7 +1,9 @@
 import dearpygui.dearpygui as dpg
+
 from .calculator_window import build_calculator
 from .database_window import build_food_database_window
 from .users_window import build_users_window
+
 
 def start_main_window():
     dpg.create_context()
