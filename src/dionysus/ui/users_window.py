@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 from .users_window_callbacks import (
-    populate_table,
+    populate_users_table,
     on_search_user
 )
 from dionysus.state import UsersState
@@ -17,8 +17,10 @@ def build_users_window():
             build_users_table(state)
         with dpg.child_window(tag="targets_window"):
             with dpg.group(horizontal=True):
-                dpg.add_text("Targets saved for:")
-                dpg.add_text("", tag="selected_target")
+                dpg.add_text("Targets for:")
+                dpg.add_text("", tag="selected_user")
+                dpg.add_button(label="Add target")
+            build_targets_table(state)
 
 
 def build_users_table(state: UsersState):
@@ -35,5 +37,25 @@ def build_users_table(state: UsersState):
     ):
         display_columns = ["Name", "Age", "Sex", "Weight", "Height"]
         for column_name in display_columns:
-            dpg.add_table_column(label=column_name, width_fixed=True)
-        populate_table(state)
+            dpg.add_table_column(label=column_name, width_stretch=True)
+        populate_users_table(state)
+
+
+def build_targets_table(state: UsersState):
+    with dpg.table(
+        header_row=True,
+        row_background=True,
+        borders_innerH=True,
+        borders_innerV=True,
+        scrollX=True,
+        hideable=True,
+        scrollY=True,
+        freeze_rows=1,
+        tag="targets_table",
+        resizable=True,
+        policy=dpg.mvTable_SizingStretchProp
+    ):
+        display_columns = ["Name", "Energy", "Protein", "Fatty Acids", "Saturated Fatty Acids", "Carbohydrates", "Fibre", "PAL"]
+        for column_name in display_columns:
+            dpg.add_table_column(label=column_name)
+

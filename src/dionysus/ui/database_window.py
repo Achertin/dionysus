@@ -37,11 +37,13 @@ def build_food_table(state: DatabaseState):
         hideable=True,
         scrollY=True,
         freeze_rows=1,
-        tag="food_database_table"
+        tag="food_database_table",
+        resizable=True,
+        policy=dpg.mvTable_SizingStretchProp
     ):
         display_columns = ["Name"] + [macro_nutrient["label"] for macro_nutrient in FOOD_METADATA["Macronutrients"].values()]
         for column_name in display_columns:
-            dpg.add_table_column(label=column_name, width_fixed=True)
+            dpg.add_table_column(label=column_name)
         populate_table(state)
 
 

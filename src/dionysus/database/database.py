@@ -121,3 +121,38 @@ def get_users(search_text):
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def get_targets(user_id):
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+
+        rows = conn.execute(
+            """
+            SELECT
+                id,
+                name,
+                energy,
+                protein,
+                fatty_acids,
+                saturated_fatty_acids,
+                carbohydrates,
+                fibre,
+                pal
+            FROM targets
+            WHERE user_id = ?
+            ORDER BY name
+            """,
+            (user_id,)
+        ).fetchall()
+
+    return [dict(row) for row in rows]
+
+
+def get_user_name(user_id):
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT name FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+    return row[0] if row else None
