@@ -110,3 +110,63 @@ FOOD_METADATA = {
         },
     },
 }
+
+
+USER_METADATA = {
+    "User Data": {
+        "name": {
+            "label": "Name",
+            "unit": "",
+        },
+        "age": {
+            "label": "Age",
+            "unit": "",
+        },
+        "sex": {
+            "label": "Sex",
+            "unit": "",
+        },
+        "weight": {
+            "label": "Weight",
+            "unit": "kg",
+        },
+        "height": {
+            "label": "Height",
+            "unit": "cm",
+        }
+    },
+    "Target Data": {
+        "name": {
+            "label": "Name",
+            "unit": "",
+        },
+        "energy": {
+            "label": "Energy",
+            "unit": "kcal",
+        },
+        "protein": {
+            "label": "Protein",
+            "unit": "g",
+        },
+        "fatty_acids": {
+            "label": "Fatty Acids",
+            "unit": "g",
+        },
+        "saturated_fatty_acids": {
+            "label": "Saturated Fatty Acids",
+            "unit": "g",
+        },
+        "carbohydrates": {
+            "label": "Carbohydrates",
+            "unit": "g",
+        },
+        "fibre": {
+            "label": "Fibre",
+            "unit": "g",
+        },
+        "pal": {
+            "label": "PAL",
+            "unit": "",
+        }
+    }
+}

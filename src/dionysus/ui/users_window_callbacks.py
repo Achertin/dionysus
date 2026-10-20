@@ -1,13 +1,13 @@
 import dearpygui.dearpygui as dpg
 
-from dionysus.constants import FOOD_METADATA
+from dionysus.constants import USER_METADATA
 from dionysus.database.database import get_users, get_targets, get_user_name
 from dionysus.state import UsersState
 
 
 def populate_users_table(state: UsersState):
     user_data = get_users(state.search_filter)
-    users_columns = ["name", "age", "sex", "weight", "height"]
+    users_columns = list(USER_METADATA["User Data"])
     for user in user_data:
         with dpg.table_row(parent="users_table"):
             for column in users_columns:
@@ -16,7 +16,7 @@ def populate_users_table(state: UsersState):
 
 def populate_targets_table(state: UsersState):
     target_data = get_targets(state.selected_user_id)
-    targets_columns = ["name"] + list(FOOD_METADATA["Macronutrients"]) + ["pal"]
+    targets_columns = list(USER_METADATA["Target Data"])
     for target in target_data:
         with dpg.table_row(parent="targets_table"):
             for column in targets_columns:
