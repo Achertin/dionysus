@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 
 from .calculator_window import build_calculator
-from .database_window import build_food_database_window
-from .users_window import build_users_window
+from .food_db.food_db_window import build_food_db_screen
+from .users.users_window import build_users_window
 
 
 def start_main_window():
@@ -18,7 +18,7 @@ def start_main_window():
         with dpg.tab_bar():
             build_calculator()
             with dpg.tab(label="Food database"):
-                build_food_database_window()
+                build_food_db_screen()
             with dpg.tab(label="Users & Targets"):
                 build_users_window()
 

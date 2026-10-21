@@ -19,7 +19,7 @@ def init_db():
         conn.executescript(schema)
 
 
-def get_food(search_text):
+def search_foods(search_text):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 
@@ -44,7 +44,7 @@ def get_food(search_text):
     return [dict(row) for row in rows]
 
 
-def get_food_detail(food_id):
+def get_food(food_id):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 
@@ -60,7 +60,7 @@ def get_food_detail(food_id):
     return row
 
 
-def add_new_food(food_data):
+def add_food(food_data):
     columns = ", ".join(food_data.keys())
     placeholders = ", ".join("?" for _ in food_data)
 
@@ -75,7 +75,7 @@ def add_new_food(food_data):
     return cursor.lastrowid
 
 
-def update_food_detail(food_id, new_data):
+def update_food(food_id, new_data):
     assignments = ", ".join(
         f"{column} = ? "
         for column in new_data
@@ -100,7 +100,7 @@ def delete_food(food_id):
         )
 
 
-def get_users(search_text):
+def search_users(search_text):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 
@@ -123,7 +123,7 @@ def get_users(search_text):
     return [dict(row) for row in rows]
 
 
-def get_targets(user_id):
+def get_targets_for_user(user_id):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
 

@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 
-from .users_window_callbacks import (
+from .callbacks import (
     populate_users_table,
     on_search_user
 )

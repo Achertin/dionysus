@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class DatabaseState:
+class FoodDBState:
     selected_food_id: int | None = None
     search_filter: str = ""
 

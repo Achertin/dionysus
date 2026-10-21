@@ -1,0 +1,9 @@
+---- 1 Consistent naming and tags ----
+  - ensure consistent function names
+  - ensure consistent tag names
+
+---- 2 exceptions and warnings ---- 
+  - add value checking
+  - add exceptions
+
+---- 3 unit testing
