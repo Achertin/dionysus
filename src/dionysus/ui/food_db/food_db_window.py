@@ -7,7 +7,7 @@ from .food_db_tags import *
 from .callbacks import (
     on_add_confirm_clicked,
     on_delete_confirm_clicked,
-    on_edit_calcel_clicked,
+    on_edit_cancel_clicked,
     on_edit_save_clicked,
     on_search_changed,
     populate_table,
@@ -38,7 +38,7 @@ def build_food_table(state: FoodDBState):
         hideable=True,
         scrollY=True,
         freeze_rows=1,
-        tag=TABLE,
+        tag=FOOD_TABLE,
         resizable=True,
         policy=dpg.mvTable_SizingStretchProp
     ):
@@ -62,11 +62,13 @@ def build_detail_panel(state: FoodDBState):
     for section in FOOD_METADATA:
         dpg.add_text(section)
         dpg.add_separator()
-        for nutrient in FOOD_METADATA[section]:
-            dpg.add_text(
-                "",
-                tag=detail_value_text(nutrient)
-            )
+        with dpg.table(header_row=False):
+            dpg.add_table_column()
+            dpg.add_table_column()
+            for nutrient, metadata in FOOD_METADATA[section].items():
+                with dpg.table_row():
+                    dpg.add_text(metadata["label"])
+                    dpg.add_text("", tag=detail_value_text(nutrient))
 
 
 def build_edit_popup(state: FoodDBState):
@@ -78,18 +80,19 @@ def build_edit_popup(state: FoodDBState):
         for section in FOOD_METADATA:
             dpg.add_text(section)
             dpg.add_separator()
-            for nutrient, metadata in FOOD_METADATA[section].items():
-                with dpg.group(horizontal=True):
-                    dpg.add_text(
-                        "",
-                        tag=edit_label_text(nutrient)
-                    )
-                    dpg.add_input_float(tag=edit_value_input(nutrient), step=0)
-                    dpg.add_text(metadata["unit"])
+            with dpg.table(header_row=False):
+                dpg.add_table_column()
+                dpg.add_table_column()
+                for nutrient, metadata in FOOD_METADATA[section].items():
+                    with dpg.table_row():
+                        dpg.add_text(metadata["label"])
+                        with dpg.group(horizontal=True):
+                            dpg.add_input_double(tag=edit_value_input(nutrient), step=0)
+                            dpg.add_text(metadata["unit"])
 
         with dpg.group(horizontal=True):
             dpg.add_button(label="Save", callback=on_edit_save_clicked, user_data=state)
-            dpg.add_button(label="Cancel", callback=on_edit_calcel_clicked, user_data=state)
+            dpg.add_button(label="Cancel", callback=on_edit_cancel_clicked, user_data=state)
 
 
 def build_delete_popup(state: FoodDBState):
@@ -106,14 +109,21 @@ def build_delete_popup(state: FoodDBState):
 def build_add_popup(state: FoodDBState):
     with dpg.popup(dpg.last_item(), modal=True, mousebutton=dpg.mvMouseButton_Left, tag=ADD_POPUP):
         dpg.add_text("Please enter details below:")
-        with dpg.group(horizontal=True):
-            dpg.add_text("Name")
-            dpg.add_input_text(tag=ADD_NAME_INPUT)
-        for nutrient, metadata in FOOD_METADATA["Macronutrients"].items():
-            with dpg.group(horizontal=True):
-                dpg.add_text(metadata["label"])
-                dpg.add_input_float(tag=add_value_input(nutrient), step=0)
-                dpg.add_text(metadata["unit"])
+        with dpg.table(header_row=False):
+            dpg.add_table_column()
+            dpg.add_table_column()
+
+            with dpg.table_row():
+                dpg.add_text("Name")
+                dpg.add_input_text(tag=ADD_NAME_INPUT)
+
+            for nutrient, metadata in FOOD_METADATA["Macronutrients"].items():
+                with dpg.table_row():
+                    dpg.add_text(metadata["label"])
+                    with dpg.group(horizontal=True):
+                        dpg.add_input_double(tag=add_value_input(nutrient), step=0)
+                        dpg.add_text(metadata["unit"])
+
         with dpg.group(horizontal=True):
             dpg.add_button(label="Add", user_data=state, callback=on_add_confirm_clicked)
             dpg.add_button(label="Cancel", callback=lambda: dpg.configure_item("add_food_popup", show=False))

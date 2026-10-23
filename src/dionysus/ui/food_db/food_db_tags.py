@@ -38,7 +38,7 @@ ADD_BUTTON = f"{_SCREEN}.search.add_button"
 
 # --- Food table -------------------------------------------------------------
 
-TABLE = f"{_SCREEN}.table"
+FOOD_TABLE = f"{_SCREEN}.food_table"
 
 
 # --- Detail panel -----------------------------------------------------------
