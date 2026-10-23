@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from dionysus.constants import USER_METADATA
-from dionysus.database.database import search_users, get_targets_for_user, get_user_name
+from dionysus.database.database import get_targets_for_user, get_user_name, search_users
 from dionysus.state import UsersState
 
 

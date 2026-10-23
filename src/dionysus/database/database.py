@@ -6,8 +6,8 @@ from dionysus.config import DATABASE_PATH
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 
-def get_connection():
-    conn =  sqlite3.connect(DATABASE_PATH)
+def get_connection(path=DATABASE_PATH):
+    conn =  sqlite3.connect(path)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 

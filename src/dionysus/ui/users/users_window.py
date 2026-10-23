@@ -1,11 +1,9 @@
 import dearpygui.dearpygui as dpg
 
-from .callbacks import (
-    populate_users_table,
-    on_search_user
-)
-from dionysus.state import UsersState
 from dionysus.constants import USER_METADATA
+from dionysus.state import UsersState
+
+from .callbacks import on_search_user, populate_users_table
 
 
 def build_users_window():
