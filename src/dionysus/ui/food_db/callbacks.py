@@ -1,6 +1,5 @@
 import dearpygui.dearpygui as dpg
 
-from .food_db_tags import *
 from dionysus.constants import FOOD_METADATA
 from dionysus.database.database import (
     add_food,
@@ -11,6 +10,21 @@ from dionysus.database.database import (
 )
 from dionysus.state import FoodDBState
 
+from .food_db_tags import (
+    ADD_NAME_INPUT,
+    ADD_POPUP,
+    DELETE_POPUP,
+    DELETE_WARNING_TEXT,
+    DETAIL_NAME_TEXT,
+    EDIT_POPUP,
+    EDIT_TITLE_TEXT,
+    FOOD_TABLE,
+    add_value_input,
+    detail_value_text,
+    edit_value_input,
+)
+
+
 # ------------------------- Food table -------------------------
 def populate_table(state: FoodDBState):
     food_data = search_foods(state.search_filter)
@@ -18,7 +32,7 @@ def populate_table(state: FoodDBState):
     for food in food_data:
         with dpg.table_row(parent=FOOD_TABLE):
             for column in database_columns:
-                if type(food[column]) == str:
+                if type(food[column]) is str:
                     dpg.add_selectable(label=f"{food[column]}", span_columns=True, user_data=(state, food["id"]), callback=on_food_selected)
                 else:
                     dpg.add_selectable(label=f"{food[column]:.1f}", span_columns=True, user_data=(state, food["id"]), callback=on_food_selected)
@@ -66,7 +80,7 @@ def clear_detail_panel():
         "Select food"
     )
     for section in FOOD_METADATA:
-        for nutrient, metadata in FOOD_METADATA[section].items():
+        for nutrient, _metadata in FOOD_METADATA[section].items():
             dpg.set_value(
                 detail_value_text(nutrient),
                 "",
@@ -82,7 +96,7 @@ def populate_edit_popup(food_id):
     )
 
     for section in FOOD_METADATA:
-        for nutrient, metadata in FOOD_METADATA[section].items():
+        for nutrient, _metadata in FOOD_METADATA[section].items():
             dpg.set_value(
                 edit_value_input(nutrient),
                 food_details[nutrient]
@@ -95,7 +109,7 @@ def clear_edit_popup():
         ""
     )
     for section in FOOD_METADATA:
-        for nutrient, metadata in FOOD_METADATA[section].items():
+        for nutrient, _metadata in FOOD_METADATA[section].items():
             dpg.set_value(
                 edit_value_input(nutrient),
                 0.0

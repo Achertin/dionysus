@@ -3,7 +3,6 @@ import dearpygui.dearpygui as dpg
 from dionysus.constants import FOOD_METADATA
 from dionysus.state import FoodDBState
 
-from .food_db_tags import *
 from .callbacks import (
     on_add_confirm_clicked,
     on_delete_confirm_clicked,
@@ -11,6 +10,24 @@ from .callbacks import (
     on_edit_save_clicked,
     on_search_changed,
     populate_table,
+)
+from .food_db_tags import (
+    ADD_BUTTON,
+    ADD_NAME_INPUT,
+    ADD_POPUP,
+    DELETE_POPUP,
+    DELETE_WARNING_TEXT,
+    DETAIL_DELETE_BUTTON,
+    DETAIL_EDIT_BUTTON,
+    DETAIL_NAME_TEXT,
+    DETAIL_WINDOW,
+    EDIT_POPUP,
+    EDIT_TITLE_TEXT,
+    FOOD_TABLE,
+    TABLE_WINDOW,
+    add_value_input,
+    detail_value_text,
+    edit_value_input,
 )
 
 
